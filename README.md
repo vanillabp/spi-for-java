@@ -1,4 +1,4 @@
-![Draft](./readme/vanillabp-headline.png)
+![](./readme/vanillabp-headline.png)
 
 *Vanilla BP* is **an aspect orientated service provider interface (SPI) for workflow systems as a Java developer would expect it to be**.
 

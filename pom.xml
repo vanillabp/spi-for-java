@@ -2,10 +2,40 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
 
-  <groupId>io.vanillabp</groupId>
+  <parent>
+    <groupId>io.vanillabp</groupId>
+    <artifactId>release-parent</artifactId>
+    <version>1.0.1</version>
+  </parent>
+
   <artifactId>spi-for-java</artifactId>
+  <version>1.0.0</version>
+
   <name>VanillaBP SPI for Java</name>
-  <version>0.0.1-SNAPSHOT</version>
+  <description>VanillaBP is an independent API for business processing engines kept simply, plain and without frills.</description>
+  <url>https://www.vanillabp.io</url>
+
+  <licenses>
+    <license>
+      <name>Apache License, Version 2.0</name>
+      <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+      <distribution>repo</distribution>
+    </license>
+  </licenses>
+
+  <developers>
+    <developer>
+      <id>VanillaBP</id>
+      <organization>Phactum Softwareentwicklung GmbH</organization>
+      <organizationUrl>https://www.phactum.at</organizationUrl>
+    </developer>
+  </developers>
+
+  <scm>
+    <connection>scm:git:https://github.com/vanillabp/spi-for-java.git</connection>
+    <developerConnection>scm:git:https://github.com/vanillabp/spi-for-java.git</developerConnection>
+    <url>http://github.com/vanillabp/spi-for-java/tree/main</url>
+  </scm>
 
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -17,9 +47,9 @@
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-compiler-plugin</artifactId>
+          <version>3.10.1</version>
           <configuration>
-            <source>8</source>
-            <target>8</target>
+            <release>11</release>
           </configuration>
         </plugin>
       </plugins>
