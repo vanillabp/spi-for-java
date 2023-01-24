@@ -15,7 +15,7 @@ import java.lang.annotation.Target;
  * 
  * <pre>
  * &#64;WorkflowTask(taskDefinition = "doSomeWorkload")
- * public void doSomeWorkload(final MyDomainEntity entity) throws {@link TaskException} {
+ * public void doSomeWorkload(final MyWorkflowAggregate aggregate) throws {@link TaskException} {
  * </pre>
  */
 @Retention(RUNTIME)

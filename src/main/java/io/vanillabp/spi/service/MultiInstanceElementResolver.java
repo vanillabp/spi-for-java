@@ -24,13 +24,13 @@ public interface MultiInstanceElementResolver<DE, T> {
      * parameter annotated by {@link MultiInstanceElement} having an attribute
      * {@link MultiInstanceElement#resolverBean()} set.
      * 
-     * @param domainEntity   The current workflow's domain-entity
+     * @param workflowAggregate The current workflow's aggregate
      * @param multiInstances a sorted map of all context-information for all active
      *                       multi-instance executions. Key is the name of the
      *                       multi-instance element. The order is from most-out to
      *                       most-inner execution.
      * @return A value which will be passed as a parameter
      */
-    T resolve(DE domainEntity, Map<String, MultiInstance<Object>> multiInstances);
+    T resolve(DE workflowAggregate, Map<String, MultiInstance<Object>> multiInstances);
 
 }

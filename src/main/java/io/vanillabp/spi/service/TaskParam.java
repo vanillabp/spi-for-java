@@ -15,7 +15,7 @@ import java.lang.annotation.Target;
  * <pre>
  * &#64;WorkflowTask
  * public void setStatus(
- *         final MyDomainEntity entity,
+ *         final MyWorkflowAggregate aggregate,
  *         &#64;TaskParam("status") String status) throws {@link TaskException} {
  * </pre>
  * 

@@ -19,7 +19,7 @@ import java.lang.annotation.Target;
  * <pre>
  * &#64;WorkflowTask(taskDefinition = "myFormKey")
  * public void doForm(
- *         final MyDomainEntity entity,
+ *         final MyWorkflowAggregate aggregate,
  *         final &#64;TaskId String id) throws {@link TaskException} {
  *     ...
  * </pre>

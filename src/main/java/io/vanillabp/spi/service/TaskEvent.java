@@ -15,7 +15,7 @@ import java.lang.annotation.Target;
  * <pre>
  * &#64;WorkflowTask(taskDefinition = "myFormKey")
  * public void setStatus(
- *         final MyDomainEntity entity,
+ *         final MyWorkflowAggregate aggregate,
  *         &#64;TaskEvent("ALL") {@link Event} event,
  *         &#64;UserTaskId String id) throws {@link TaskException} {
  * </pre>
