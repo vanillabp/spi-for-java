@@ -517,7 +517,7 @@ In this example the element of the collection based 'RequestRideOffer' multi-ins
 
 A user task is a task which is fulfilled by a human. In terms of a BPMN-engine the engine stops and waits for human input (e.g. collected via a graphical user interface) to be reported via API. This procedure is the same as processing asynchronous service tasks (e.g. calling an external service which confirms after a while by calling a REST-endpoint).
 
-In both situations one needs a reference id to be used to complete the task once the workload is done (either by a human or a service). This the reference id, also called `task-id`, is handed over by using the `@TaskId` annotation:
+In both situations one needs a reference id to be used to complete the task once the workload is done (either by a human or a service). This reference id, also called `task-id`, is handed over by using the `@TaskId` annotation:
 
 ```java
 @WorkflowTask
