@@ -9,7 +9,7 @@
   </parent>
 
   <artifactId>spi-for-java</artifactId>
-  <version>1.0.1-SNAPSHOT</version>
+  <version>1.0.2-SNAPSHOT</version>
 
   <name>VanillaBP SPI for Java</name>
   <description>VanillaBP is an independent API for business processing engines kept simply, plain and without frills.</description>
