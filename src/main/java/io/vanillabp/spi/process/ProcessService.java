@@ -16,11 +16,6 @@ public interface ProcessService<DE> {
     DE startWorkflow(DE workflowAggregate) throws Exception;
 
     /**
-     * @return The BPMN process-id this service belongs to
-     */
-    String getBpmnProcessId();
-
-    /**
      * Correlate a message for the workflow-aggregate's workflow or it's sub-workflows
      * (call-activities).
      *
