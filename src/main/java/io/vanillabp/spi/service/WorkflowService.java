@@ -23,10 +23,16 @@ public @interface WorkflowService {
     Class<?> workflowAggregateClass();
 
     /**
-     * @return The process definitions as defined in the BPMN for which the
+     * @return The process definition id as defined in the BPMN for which the
      *         annotated service is responsible for. Defaults to the bean name of
-     *         the service.
+     *         the service. This id is used to start new workflows and
+     *         correlate messages not related to a dedicated workflow.
      */
-    BpmnProcess[] bpmnProcess() default @BpmnProcess(bpmnProcessId = BpmnProcess.USE_CLASS_NAME);
+    BpmnProcess bpmnProcess() default @BpmnProcess(bpmnProcessId = BpmnProcess.USE_CLASS_NAME);
 
+    /**
+     * @return Any additional process definition ids as defined in the BPMN for which the
+     *         annotated service is responsible for.
+     */
+    BpmnProcess[] secondaryBpmnProcesses() default {};
 }

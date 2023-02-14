@@ -45,5 +45,11 @@ public @interface BpmnProcess {
      * @return The version of the process this method belongs to
      */
     String[] version() default ALL_VERSIONS;
+    
+    /**
+     * @return Whether this is the BPMN process id used to start new workflows and
+     *         correlate messages.
+     */
+    boolean primary() default true;
 
 }
