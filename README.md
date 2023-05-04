@@ -2,7 +2,7 @@
 
 *Vanilla BP* is **an aspect orientated service provider interface (SPI) for workflow systems as a Java developer would expect it to be**.
 
-The SPI was developed as part of the [Taxi Ride Blueprint](https://github.com/phactum/taxiride-blueprint) which is a demo of how to implement Java based business processing software using state-of-the-art techniques. Therefore examples shown in this README are about building a taxi ride business process implementation.
+The SPI was developed as part of the [Taxi Ride Blueprint](https://github.com/phactum/taxiride-blueprint) which is a demo of how to implement Java based business processing software using state-of-the-art techniques. Therefore, examples shown in this README are about building a taxi ride business process implementation.
 
 *Heads up:* If you want to learn about the things we had in mind creating this SPI then don't miss to also read the [About the SPI](#about-the-spi) section afterwards :wink:. It also includes links to [available adapters](#available-adapters) to use this SPI with an existing workflow system.
 
@@ -36,7 +36,8 @@ The SPI was developed as part of the [Taxi Ride Blueprint](https://github.com/ph
 
 This is a section of a taxi ride workflow and should give you an idea of how the Vanilla BP SPI is used in your business code:
 
-![Section of a taxi ride workflow](./readme/example.png) *Screenshot of [Camunda Modeler](https://camunda.com/en/download/modeler/)*
+![Section of a taxi ride workflow](./readme/example.png)  
+*Screenshot of [Camunda Modeler](https://camunda.com/en/download/modeler/)*
 
 ```java
 @Service
@@ -144,7 +145,7 @@ Starting a workflow or correlating a message (explained in the [Advanced topics]
 
 We introduce a name based approach for the binding in an aspect-oriented style. As a basis for this binding the BPMN process-id is used:
 
-![](./readme/process_propertiespanel.png)
+![](./readme/process_propertiespanel.png)  
 *Screenshot of [Camunda Modeler](https://camunda.com/en/download/modeler/)*
 
 #### Software-first approach
@@ -244,8 +245,11 @@ As mentioned in section [Process-specific workflow-aggregate](#process-specific-
 
 There are two major situations in which expressions are used:
 
-1. A path decision has to be taken (exclusive gateway, inclusive gateway, conditional flows) ![](./readme/expression_propertiespanel.png) *Screenshot of [Camunda Modeler](https://camunda.com/en/download/modeler/)*
-1. A value needs to be calculated (e.g. x business-days as a timer-event definition) ![](./readme/timer_propertiespanel.png) *Screenshot of [Camunda Modeler](https://camunda.com/en/download/modeler/)*
+1. A path decision has to be taken (exclusive gateway, inclusive gateway, conditional flows) ![](./readme/expression_propertiespanel.png)  
+*Screenshot of [Camunda Modeler](https://camunda.com/en/download/modeler/)*
+
+1. A value needs to be calculated (e.g. x business-days as a timer-event definition) ![](./readme/timer_propertiespanel.png)  
+*Screenshot of [Camunda Modeler](https://camunda.com/en/download/modeler/)*
 
 The expression specified in the BPMN will be used to retrieve the value from the workflow-aggregate by using a getter or, if there is not getter, by accessing the named field. In case of the getter the result can also be computed on-the-fly:
 
@@ -286,7 +290,7 @@ Reasons for not using process-variables:
 1. BPMN
     1. Process variables have no schema and therefore they cannot be documented and tested easily
     1. Using process variables, the "contract" between your BPMN model and your code can become quite intransparent
-    1. No type-safety with regards to the information needed by the process
+    1. No type-safety in regard to the information needed by the process
     1. Tight-coupling of the code and the business process definition
 1. Operation of workflows
     1. Historic process-variables need to be cleaned up in order not to exhaust your database (even for cleaning-up itself!)
@@ -313,9 +317,12 @@ One can use the `ProcessService` to perform that message correlation:
 ```java
     @Autowired
     private RideRepositories rides;
+
+    @Autowired
+    private RideService<Ride> rideService;
     
     public void confirmRide(RideConfirmation message) {
-         ride = rides.get(message.getRideId());
+         var ride = rides.get(message.getRideId());
          ride.setDriver(message.getDriverId());
          rideService.correlateMessage(ride, message);
     }
@@ -347,21 +354,21 @@ Valid formats:
 * '1-3': only versions "1", "2" and "3"
 * '<3': only versions "1" and "2"
 * '<=3': only versions "1", "2" and "3"
-* '>3': only versions higher then "3"
-* '>=3': only versions higher then or equal to "3"
+* '>3': only versions higher than "3"
+* '>=3': only versions higher than or equal to "3"
 
 *Heads up:* This feature is not yet implemented but already prepared in code. Fill your annotations
 properly to benefit from it once it's available.
 
 ### Call-activities
 
-In general BPMN models can be splitted up by using the "call-activity" task which is not meant to be executed by custom business code but instead is interpreted by the workflow system to spawn another process instance based on another BPMN.
+In general BPMN models can be split up by using the "call-activity" task which is not meant to be executed by custom business code but instead is interpreted by the workflow system to spawn another process instance based on another BPMN.
 
 There are two different situations in which you might want to split up the BPMN model into several smaller models:
 
 #### 1. Decomposition - a call-activity is used to hide complexity
 
-![](./readme/callactivity_propertiespanel.png)
+![](./readme/callactivity_propertiespanel.png)  
 *Screenshot of [Camunda Modeler](https://camunda.com/en/download/modeler/)*
 
 In this situation the workflow-aggregate entity created for the root workflow is also used for the workflows spawned by call-activities. The reason for this is, that one still could put the content of the call-activities BPMN into to parent BPMN (e.g. as an embedded subprocess).
@@ -378,7 +385,7 @@ public class DetermineDriver {
 }
 ```
 
-*Hint:* In this example the attribute bpmnProcess could be removed since the BPMN process-id is the same as the service's class-name ("convention over configuration").
+*Hint:* In this example the attribute `bpmnProcess` could be removed since the BPMN process-id is the same as the service's class-name ("convention over configuration").
 
 But one can also decide to reuse the existing service-bean for the call-activity's process by simply adding another `@BpmnProcess` annotation:
 
@@ -395,11 +402,11 @@ public class TaxiRide {
 }
 ```
 
-*Hint:* In this example the attribute bpmnProcess of the first @BpmnProcess annotation could be removed since the BPMN process-id is the same as the service's class-name ("convention over configuration").
+*Hint:* In this example the attribute `bpmnProcess` of the first `@BpmnProcess` annotation could be removed since the BPMN process-id is the same as the service's class-name ("convention over configuration").
 
 #### 1. Reuse - a call-activity is used to reuse a section of a process by other processes, too
 
-In this situation the call-activity's process is used in different contexts of different parent-processes. Therefore also a separate workflow-aggregate has to be defined and used.
+In this situation the call-activity's process is used in different contexts of different parent-processes. Therefore, also a separate workflow-aggregate has to be defined and used.
 
 In order to support this notion the target process is not modeled as a call-activity but as a collapsed pool. Instead of a call-activity a service task is used in the BPMN.
 
@@ -411,12 +418,12 @@ public class ChargeCreditCard {
 }
 ```
 
-![Reuse instead of decomposition](./readme/call-activity.png)
+![Reuse instead of decomposition](./readme/call-activity.png)  
 *Screenshot of [Camunda Modeler](https://camunda.com/en/download/modeler/)*
 
 ### Multi-instance
 
-![](./readme/multi-instance.png)
+![](./readme/multi-instance.png)  
 *Screenshot of [Camunda Modeler](https://camunda.com/en/download/modeler/)*
 
 For multi-instance executions typically a lot of process variables are created automatically:
@@ -432,7 +439,7 @@ To avoid problems on serializing and deserializing elements:
 1. In case of dynamically changing collections use attribute `completionCondition`.
 1. Fetch the current element on your own based on the current iteration's index.
 
-Especially the last item is important: If you ask the process engine to handle the collection to retrieve the current element it might be that this is not done in the most efficient way, since the process engine does not know about the details of the underlying data (typically the workflow-aggregate). Therefore it is better to fetch the element as part of the method the iteration is used for.
+Especially the last item is important: If you ask the process engine to handle the collection to retrieve the current element it might be that this is not done in the most efficient way, since the process engine does not know about the details of the underlying data (typically the workflow-aggregate). Therefore, it is better to fetch the element as part of the method the iteration is used for.
 
 #### Tasks
 
@@ -509,7 +516,7 @@ public class DriverResolver implements MultiInstanceElementResolver<Ride, Driver
 }
 ```
 
-In this example the element of the collection based 'RequestRideOffer' multi-instance embedded subprocess is used next to the index of the nested multi-instance 'CancelNotRequiredRide'. Both values are passed to the internal 'DriverService' to determine the required driver entity.
+In this example the element of the collection based `RequestRideOffer` multi-instance embedded subprocess is used next to the index of the nested multi-instance `CancelNotRequiredRide`. Both values are passed to the internal `DriverService` to determine the required driver entity.
 
 ### User tasks and asynchronous tasks
 
@@ -532,14 +539,15 @@ public void retrievePayment(
 
 #### Task event
 
-According to the life-cycle of asynchronous tasks the are two situations in which one might to get informed by the engine:
+According to the life-cycle of asynchronous tasks there are two situations in which one might to get informed by the engine:
 
-![asynchronous tasks life-cycle events](./readme/user-task.png) *Screenshot of [Camunda Modeler](https://camunda.com/en/download/modeler/)*
+![asynchronous tasks life-cycle events](./readme/user-task.png)  
+*Screenshot of [Camunda Modeler](https://camunda.com/en/download/modeler/)*
 
 A `@TaskEvent` annotated parameter can be used to mark a method to be called in one or in both situations. Depending on whether a `@TaskEvent` annotated parameter is given and [it's value](./src/main/java/io/vanillabp/spi/service/TaskEvent.java), the workflow-method is called on each event:
 
 * `@TaskEvent(TaskEvent.Event.CREATED)`: The workflow-method is called only when the task is created.
-* `@TaskEvent(TaskEvent.Event.CANCELED)`: The workflow-method is called only when the task is canceled (e.g. due to interrupting boundary events). It can be used to unset a task-id previously stored (e.g. `    ride.setRetrievePaymentTaskId(null)`).
+* `@TaskEvent(TaskEvent.Event.CANCELED)`: The workflow-method is called only when the task is canceled (e.g. due to interrupting boundary events). It can be used to unset a task-id previously stored (e.g. `ride.setRetrievePaymentTaskId(null)`).
 * `@TaskEvent(TaskEvent.Event.ALL)`: The workflow-method is called two times each for `CREATED` and `CANCELED`. The default behavior for the `@TaskEvent` annotation with no value given.
 * No `@TaskEvent` annotation: The workflow-method is called only when the task is created.
 
