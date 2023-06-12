@@ -185,7 +185,7 @@ If the service-bean becomes huge due to the number of tasks of the workflow then
 
 Similar to [wiring a process](#wire-up-a-process) an aspect-oriented approach is used for the task binding. This applies to service tasks, send tasks, business rule tasks and user tasks.
 
-![](./readme/task_propertiespanel.png)
+![](./readme/task_propertiespanel.png)  
 *Screenshot of [Camunda Modeler](https://camunda.com/en/download/modeler/)*
 
 The `@WorkflowTask` annotation is used to mark a method responsible for certain BPMN task:
@@ -283,7 +283,8 @@ public class Ride {
 
 If you are familiar with any workflow system then you might know about process-variables you can use to store information the workflow needs to fulfill decisions like at sequence-flow conditions. As shown in upper sections the Vanilla BP SPI does not use process-variables but makes the workflow system [use the workflow-aggregate instead](#wire-up-an-expression):
 
-![Camunda Modeler](./readme/expression_propertiespanel.png) *Screenshot of [Camunda Modeler](https://camunda.com/en/download/modeler/)*
+![Camunda Modeler](./readme/expression_propertiespanel.png)  
+*Screenshot of [Camunda Modeler](https://camunda.com/en/download/modeler/)*
 
 Reasons for not using process-variables:
 
@@ -393,10 +394,8 @@ But one can also decide to reuse the existing service-bean for the call-activity
 @Component
 @WorkflowService(
         workflowAggregateClass = Ride.class,
-        bpmProcess = {
-            @BpmnProcess(bpmnProcessId = "TaxiRide"),
-            @BpmnProcess(bpmnProcessId = "DetermineDriver")
-        })
+        bpmProcess = @BpmnProcess(bpmnProcessId = "TaxiRide"),
+        secondaryBpmnProcesses = @BpmnProcess(bpmnProcessId = "DetermineDriver"))
 public class TaxiRide {
   ...
 }
