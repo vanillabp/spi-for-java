@@ -37,6 +37,7 @@ The SPI was developed as part of the [Taxi Ride Blueprint](https://github.com/ph
 This is a section of a taxi ride workflow and should give you an idea of how the Vanilla BP SPI is used in your business code:
 
 ![Section of a taxi ride workflow](./readme/example.png)  
+
 *Screenshot of [Camunda Modeler](https://camunda.com/en/download/modeler/)*
 
 ```java
@@ -146,6 +147,7 @@ Starting a workflow or correlating a message (explained in the [Advanced topics]
 We introduce a name based approach for the binding in an aspect-oriented style. As a basis for this binding the BPMN process-id is used:
 
 ![](./readme/process_propertiespanel.png)  
+
 *Screenshot of [Camunda Modeler](https://camunda.com/en/download/modeler/)*
 
 #### Software-first approach
@@ -186,6 +188,7 @@ If the service-bean becomes huge due to the number of tasks of the workflow then
 Similar to [wiring a process](#wire-up-a-process) an aspect-oriented approach is used for the task binding. This applies to service tasks, send tasks, business rule tasks and user tasks.
 
 ![](./readme/task_propertiespanel.png)
+
 *Screenshot of [Camunda Modeler](https://camunda.com/en/download/modeler/)*
 
 The `@WorkflowTask` annotation is used to mark a method responsible for certain BPMN task:
@@ -283,7 +286,9 @@ public class Ride {
 
 If you are familiar with any workflow system then you might know about process-variables you can use to store information the workflow needs to fulfill decisions like at sequence-flow conditions. As shown in upper sections the Vanilla BP SPI does not use process-variables but makes the workflow system [use the workflow-aggregate instead](#wire-up-an-expression):
 
-![Camunda Modeler](./readme/expression_propertiespanel.png) *Screenshot of [Camunda Modeler](https://camunda.com/en/download/modeler/)*
+![Camunda Modeler](./readme/expression_propertiespanel.png)
+
+*Screenshot of [Camunda Modeler](https://camunda.com/en/download/modeler/)*
 
 Reasons for not using process-variables:
 
@@ -369,6 +374,7 @@ There are two different situations in which you might want to split up the BPMN 
 #### 1. Decomposition - a call-activity is used to hide complexity
 
 ![](./readme/callactivity_propertiespanel.png)  
+
 *Screenshot of [Camunda Modeler](https://camunda.com/en/download/modeler/)*
 
 In this situation the workflow-aggregate entity created for the root workflow is also used for the workflows spawned by call-activities. The reason for this is, that one still could put the content of the call-activities BPMN into to parent BPMN (e.g. as an embedded subprocess).
@@ -393,10 +399,8 @@ But one can also decide to reuse the existing service-bean for the call-activity
 @Component
 @WorkflowService(
         workflowAggregateClass = Ride.class,
-        bpmProcess = {
-            @BpmnProcess(bpmnProcessId = "TaxiRide"),
-            @BpmnProcess(bpmnProcessId = "DetermineDriver")
-        })
+        bpmProcess = @BpmnProcess(bpmnProcessId = "TaxiRide"),
+        secondaryBpmnProcesses = @BpmnProcess(bpmnProcessId = "DetermineDriver"))
 public class TaxiRide {
   ...
 }
@@ -418,12 +422,14 @@ public class ChargeCreditCard {
 }
 ```
 
-![Reuse instead of decomposition](./readme/call-activity.png)  
+![Reuse instead of decomposition](./readme/call-activity.png) 
+
 *Screenshot of [Camunda Modeler](https://camunda.com/en/download/modeler/)*
 
 ### Multi-instance
 
-![](./readme/multi-instance.png)  
+![](./readme/multi-instance.png)
+
 *Screenshot of [Camunda Modeler](https://camunda.com/en/download/modeler/)*
 
 For multi-instance executions typically a lot of process variables are created automatically:
@@ -542,6 +548,7 @@ public void retrievePayment(
 According to the life-cycle of asynchronous tasks there are two situations in which one might to get informed by the engine:
 
 ![asynchronous tasks life-cycle events](./readme/user-task.png)  
+
 *Screenshot of [Camunda Modeler](https://camunda.com/en/download/modeler/)*
 
 A `@TaskEvent` annotated parameter can be used to mark a method to be called in one or in both situations. Depending on whether a `@TaskEvent` annotated parameter is given and [it's value](./src/main/java/io/vanillabp/spi/service/TaskEvent.java), the workflow-method is called on each event:
