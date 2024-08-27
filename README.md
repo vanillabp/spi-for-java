@@ -136,7 +136,7 @@ To start a workflow we can use it as part of a typical bean method which my be c
          // use the request to initialize the aggregate
          var ride = new Ride(request);
          // start the process
-         rideService.startProcess(ride);
+         rideService.startWorkflow(ride);
     }
 ```
 
