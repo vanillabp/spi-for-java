@@ -118,7 +118,13 @@ public class Ride {
 }
 ```
 
-This data has a 1:1 relationship to a particular workflow (a running instance of a BPMN process). The Vanilla BP SPI uses a dedicated JPA entity per workflow for storing those values. This entity might be split up into a couple of sub-entities (many-to-many, one-to-many, many-to-one relations and embedded objects) but the root of that entity-tree is the record connected to the workflow. In terms of DDD this entire tree is called *an aggregate*.
+This data has a 1:1 relationship to a particular workflow (a running instance of a BPMN process).
+The Vanilla BP SPI uses a dedicated entity per workflow for storing those values. In terms of DDD this entire tree is called *an aggregate*.
+
+When using JPA for aggregate persistence, this entity might be split up into a couple of sub-entities (many-to-many, one-to-many, many-to-one relations and embedded objects) but the root of that entity-tree is the record connected to the workflow.
+
+It is also possible to use another persistence technology than JPA like NoSQL databases.
+How to achieve this depends on the runtime used (e.g. [Spring Boot - Workflow aggregate persistence](https://github.com/vanillabp/spring-boot-support#workflow-aggregate-persistence)).
 
 ### Start a workflow
 
@@ -240,7 +246,7 @@ public void selectDriverAccordingToScore(Ride ride) {
 }
 ```
 
-As mentioned in section [Process-specific workflow-aggregate](#process-specific-workflow-aggregate) for each workflow a JPA entity-record is used as a workflow-aggregate. So, whenever a service-method is called there is one parameter accepted: The workflow-aggregate providing values of the current workflow.
+As mentioned in section [Process-specific workflow-aggregate](#process-specific-workflow-aggregate) for each workflow an entity-record is used as a workflow-aggregate. So, whenever a service-method is called there is one parameter accepted: The workflow-aggregate providing values of the current workflow.
 
 *Hint:* These workflow task methods do not return any value because they operate on the given data from the workflow-aggregate and also store new data in the workflow-aggregate if necessary. So, just change the field values of the aggregate as the [BPMS-specific adapter](../adapters/README.md#engine-adapters) used will take care of persisting these changed values.
 
