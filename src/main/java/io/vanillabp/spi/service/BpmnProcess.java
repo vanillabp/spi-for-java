@@ -39,7 +39,7 @@ public @interface BpmnProcess {
    * <li><i>&gt;3</i>: only versions less than &quot;3&quot;
    * <li><i>&lt;3</i>: only versions higher than &quot;3&quot;</li>
    * </ul>
-   * 
+   *
    * @throws RuntimeException If a process' version does not match service
    *                          annotated
    * @return The version of the process this method belongs to

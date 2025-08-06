@@ -795,6 +795,6 @@ Special thanks go to Martin Schimak, [plexiti GmbH](https://plexiti.com/about/),
 
 ## License
 
-Copyright 2022 Phactum Softwareentwicklung GmbH
+Copyright 2026 Phactum Softwareentwicklung GmbH
 
 Licensed under the Apache License, Version 2.0

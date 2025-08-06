@@ -10,14 +10,14 @@ import io.vanillabp.spi.service.TaskId;
  */
 public interface ProcessService<DE> {
 
-  /**
-   * Start a new workflow.
-   *
-   * @param workflowAggregate The workflow-aggregate
-   * @return The workflow-aggregate attached to JPA
-   */
-  DE startWorkflow(
-      DE workflowAggregate);
+    /**
+     * Start a new workflow.
+     * 
+     * @param workflowAggregate The workflow-aggregate
+     * @return The workflow-aggregate attached to JPA
+     */
+    DE startWorkflow(
+        DE workflowAggregate);
 
   /**
    * Starts a new workflow by message start event.
