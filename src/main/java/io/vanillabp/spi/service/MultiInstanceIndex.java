@@ -14,10 +14,10 @@ import java.lang.annotation.Target;
 @Documented
 public @interface MultiInstanceIndex {
 
-    /**
-     * @return The name of variable/field/context which holds the current index of
-     *         the multi-instance iteration.
-     */
-    String value();
+  /**
+   * @return The name of variable/field/context which holds the current index of
+   *         the multi-instance iteration.
+   */
+  String value();
 
 }

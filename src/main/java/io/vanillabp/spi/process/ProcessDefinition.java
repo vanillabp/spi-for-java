@@ -10,8 +10,8 @@ import java.util.List;
  *                       otherwise a list of element ids that use the process definition (call-activities)
  */
 public record ProcessDefinition(
-        String id,
-        String bpmnProcessId,
-        String version,
-        List<String> usedByElements) {
+                                String id,
+                                String bpmnProcessId,
+                                String version,
+                                List<String> usedByElements) {
 }

@@ -9,35 +9,35 @@ The SPI was developed as part of the [Taxi Ride Blueprint](https://github.com/ph
 ## Content
 
 1. [How it looks like](#how-it-looks-like)
-1. [Usage](#usage)
-    1. [Process-specific workflow-aggregate](#process-specific-workflow-aggregate)
-    1. [Start a workflow](#start-a-workflow)
-    1. [Wire up a process](#wire-up-a-process)
-    1. [Wire up a task](#wire-up-a-task)
-    1. [Wire up an expression](#wire-up-an-expression)
-1. [Advanced topics](#advanced-topics)
-    1. [Natural ids](#natural-ids)
-    1. [Process variables](#process-variables)
-    1. [Correlate an incoming message](#correlate-an-incoming-message)
-    1. [Versioning of BPMN business-processes](#versioning-of-bpmn-business-processes)
-    1. [Call-activities](#call-activities)
-    1. [Multi-instance](#multi-instance)
-    1. [User tasks and asynchronous tasks](#user-tasks-and-asynchronous-tasks)
-    1. [Viewing BPMN and execution history of workflows](#viewing-bpmn-and-execution-history-of-workflows)
-1. [About the SPI](#about-the-spi)
-    1. [Prerequisites](#prerequisites)
-    1. [Motivation](#motivation)
-    1. [Goals](#goals)
-    1. [Available Adapters](#available-adapters)
-    1. [Concept](#concept)
-1. [Noteworthy & Contributors](#noteworthy--contributors)
-1. [License](#license)
+2. [Usage](#usage)
+   1. [Process-specific workflow-aggregate](#process-specific-workflow-aggregate)
+   2. [Start a workflow](#start-a-workflow)
+   3. [Wire up a process](#wire-up-a-process)
+   4. [Wire up a task](#wire-up-a-task)
+   5. [Wire up an expression](#wire-up-an-expression)
+3. [Advanced topics](#advanced-topics)
+   1. [Natural ids](#natural-ids)
+   2. [Process variables](#process-variables)
+   3. [Correlate an incoming message](#correlate-an-incoming-message)
+   4. [Versioning of BPMN business-processes](#versioning-of-bpmn-business-processes)
+   5. [Call-activities](#call-activities)
+   6. [Multi-instance](#multi-instance)
+   7. [User tasks and asynchronous tasks](#user-tasks-and-asynchronous-tasks)
+   8. [Viewing BPMN and execution history of workflows](#viewing-bpmn-and-execution-history-of-workflows)
+4. [About the SPI](#about-the-spi)
+   1. [Prerequisites](#prerequisites)
+   2. [Motivation](#motivation)
+   3. [Goals](#goals)
+   4. [Available Adapters](#available-adapters)
+   5. [Concept](#concept)
+5. [Noteworthy & Contributors](#noteworthy--contributors)
+6. [License](#license)
 
 ## How it looks like
 
 This is a section of a taxi ride workflow and should give you an idea of how the Vanilla BP SPI is used in your business code:
 
-![Section of a taxi ride workflow](./readme/example.png)  
+![Section of a taxi ride workflow](./readme/example.png)
 
 *Screenshot of [Camunda Modeler](https://camunda.com/en/download/modeler/)*
 
@@ -132,19 +132,19 @@ How to achieve this depends on the runtime used (e.g. [Spring Boot - Workflow ag
 There is a ready-to-use service bean available called `ProcessService`. It is a generic bean using the workflow aggregate's class as a generic parameter and can be injected in any Spring component:
 
 ```java
-    @Autowired
-    private ProcessService<Ride> rideService;
+@Autowired
+private ProcessService<Ride> rideService;
 ```
 
 To start a workflow we can use it as part of a typical bean method which my be called due to a business event (e.g. user hits a button):
 
 ```java
-    public void rideBooked(RideRequest request) {
-         // use the request to initialize the aggregate
-         var ride = new Ride(request);
-         // start the process
-         rideService.startWorkflow(ride);
-    }
+public void rideBooked(RideRequest request) {
+     // use the request to initialize the aggregate
+     var ride = new Ride(request);
+     // start the process
+     rideService.startWorkflow(ride);
+}
 ```
 
 ### Wire up a process
@@ -153,7 +153,7 @@ Starting a workflow or correlating a message (explained in the [Advanced topics]
 
 We introduce a name based approach for the binding in an aspect-oriented style. As a basis for this binding the BPMN process-id is used:
 
-![](./readme/process_propertiespanel.png)  
+![](./readme/process_propertiespanel.png)
 
 *Screenshot of [Camunda Modeler](https://camunda.com/en/download/modeler/)*
 
@@ -256,10 +256,10 @@ As mentioned in section [Process-specific workflow-aggregate](#process-specific-
 There are two major situations in which expressions are used:
 
 1. A path decision has to be taken (exclusive gateway, inclusive gateway, conditional flows) ![](./readme/expression_propertiespanel.png)  
-*Screenshot of [Camunda Modeler](https://camunda.com/en/download/modeler/)*
+   *Screenshot of [Camunda Modeler](https://camunda.com/en/download/modeler/)*
 
-1. A value needs to be calculated (e.g. x business-days as a timer-event definition) ![](./readme/timer_propertiespanel.png)  
-*Screenshot of [Camunda Modeler](https://camunda.com/en/download/modeler/)*
+2. A value needs to be calculated (e.g. x business-days as a timer-event definition) ![](./readme/timer_propertiespanel.png)  
+   *Screenshot of [Camunda Modeler](https://camunda.com/en/download/modeler/)*
 
 The expression specified in the BPMN will be used to retrieve the value from the workflow-aggregate by using a getter or, if there is not getter, by accessing the named field. In case of the getter the result can also be computed on-the-fly:
 
@@ -300,15 +300,15 @@ If you are familiar with any workflow system then you might know about process-v
 Reasons for not using process-variables:
 
 1. BPMN
-    1. Process variables have no schema and therefore they cannot be documented and tested easily
-    1. Using process variables, the "contract" between your BPMN model and your code can become quite intransparent
-    1. No type-safety in regard to the information needed by the process
-    1. Tight-coupling of the code and the business process definition
-1. Operation of workflows
-    1. Historic process-variables need to be cleaned up in order not to exhaust your database (even for cleaning-up itself!)
-    1. Process-variables tend to pollute the execution context because typically they are not cleaned up by developers. The longer the process is running the more unused variables are stored.
-    1. For call-activities, *all* process-variables are copied as a default, even including the temporary and unused variables mentioned above.
-    1. Schema evolution: Process variables may have complex types and evolve over time. Migrating such values is a hard job.
+   1. Process variables have no schema and therefore they cannot be documented and tested easily
+   2. Using process variables, the "contract" between your BPMN model and your code can become quite intransparent
+   3. No type-safety in regard to the information needed by the process
+   4. Tight-coupling of the code and the business process definition
+2. Operation of workflows
+   1. Historic process-variables need to be cleaned up in order not to exhaust your database (even for cleaning-up itself!)
+   2. Process-variables tend to pollute the execution context because typically they are not cleaned up by developers. The longer the process is running the more unused variables are stored.
+   3. For call-activities, *all* process-variables are copied as a default, even including the temporary and unused variables mentioned above.
+   4. Schema evolution: Process variables may have complex types and evolve over time. Migrating such values is a hard job.
 
 ### Natural ids
 
@@ -381,7 +381,7 @@ There are two different situations in which you might want to split up the BPMN 
 
 #### 1. Decomposition - a call-activity is used to hide complexity
 
-![](./readme/callactivity_propertiespanel.png)  
+![](./readme/callactivity_propertiespanel.png)
 
 *Screenshot of [Camunda Modeler](https://camunda.com/en/download/modeler/)*
 
@@ -430,7 +430,7 @@ public class ChargeCreditCard {
 }
 ```
 
-![Reuse instead of decomposition](./readme/call-activity.png) 
+![Reuse instead of decomposition](./readme/call-activity.png)
 
 *Screenshot of [Camunda Modeler](https://camunda.com/en/download/modeler/)*
 
@@ -443,15 +443,15 @@ public class ChargeCreditCard {
 For multi-instance executions typically a lot of process variables are created automatically:
 
 1. The current element of the collection
-1. The number of index of the current element
-1. The total number of elements
+2. The number of index of the current element
+3. The total number of elements
 
 To avoid problems on serializing and deserializing elements:
 
 1. Don't use collection values for multi-instance activities.
-1. Use attribute `loop-cardinality` instead to simply define the number of iterations.
-1. In case of dynamically changing collections use attribute `completionCondition`.
-1. Fetch the current element on your own based on the current iteration's index.
+2. Use attribute `loop-cardinality` instead to simply define the number of iterations.
+3. In case of dynamically changing collections use attribute `completionCondition`.
+4. Fetch the current element on your own based on the current iteration's index.
 
 Especially the last item is important: If you ask the process engine to handle the collection to retrieve the current element it might be that this is not done in the most efficient way, since the process engine does not know about the details of the underlying data (typically the workflow-aggregate). Therefore, it is better to fetch the element as part of the method the iteration is used for.
 
@@ -555,7 +555,7 @@ public void retrievePayment(
 
 According to the life-cycle of asynchronous tasks there are two situations in which one might to get informed by the engine:
 
-![asynchronous tasks life-cycle events](./readme/user-task.png)  
+![asynchronous tasks life-cycle events](./readme/user-task.png)
 
 *Screenshot of [Camunda Modeler](https://camunda.com/en/download/modeler/)*
 
@@ -601,16 +601,19 @@ a workflow and the workflow's execution history.
 *VanillaBP* provides all data necessary to feed a BPMN viewer:
 
 1. **The process definitions used by a certain workflow:**<br>
+
    ```java
    List<ProcessDefinition> getProcessDefinitions(
       DE workflowAggregate,
       String historyContext) throws WorkflowNotFoundException;
    ```
 2. **The BPMN-XML of a process definition:**<br>
+
    ```java
    InputStream getBpmnXml(String processDefinitionId) throws ProcessDefinitionNotFoundException;
    ```
 3. **The execution history of a certain workflow:**<br>
+
    ```java
    WorkflowHistory getWorkflowHistory(
        DE workflowAggregate,
@@ -652,17 +655,17 @@ Typically, users want to see the BPMN colored according to the current state of 
 The data necessary for this is provided by the method `getWorkflowHistory`:
 
 ```java
-    @GetMapping("/{rideId}/workflow-history")
-    public ResponseEntity<WorkflowHistory> getWorkflowHistory(
-            @PathVariable final String rideId) {
-        var ride = rides.get(rideId);
-        var workflowHistory = service.getWorkflowHistory(ride, null);
-        return ResponseEntity.ok(workflowHistory);
-    }
+@GetMapping("/{rideId}/workflow-history")
+public ResponseEntity<WorkflowHistory> getWorkflowHistory(
+        @PathVariable final String rideId) {
+    var ride = rides.get(rideId);
+    var workflowHistory = service.getWorkflowHistory(ride, null);
+    return ResponseEntity.ok(workflowHistory);
+}
 ```
 
-The [WorkflowHistory](./src/main/java/io/vanillabp/spi/process/WorkflowHistory.java) primarily consists of the time 
-when the workflow is started, the time when the workflow ended (if) and the execution history for each element 
+The [WorkflowHistory](./src/main/java/io/vanillabp/spi/process/WorkflowHistory.java) primarily consists of the time
+when the workflow is started, the time when the workflow ended (if) and the execution history for each element
 of the workflow (see `elementsHistory`).
 
 Items in `elementsHistory` are sorted by their execution. Each
@@ -708,7 +711,7 @@ for call-activity elements already executed. This value can be used to dig down 
 process definitions and retrieve the next level using the method `getProcessDefinitions` passing the history-context
 of the call-activity's execution.
 
-A viewer might show the path of steps already digged down, each linked as a navigation to go back to upper processes 
+A viewer might show the path of steps already digged down, each linked as a navigation to go back to upper processes
 or the main process.
 
 ## About the SPI
@@ -766,7 +769,7 @@ In case of more complex processes typically sections of fulfillment can be ident
 
 In terms of BPMN there are tasks (e.g. service-task, send-task, etc.) which are wired to methods of that service by name and there are expressions (e.g. conditional-flows) which are evaluated against a process-specific [workflow-aggregate](https://martinfowler.com/bliki/DDD_Aggregate.html) (see *How is data handled?*).
 
-All those names used to wire tasks or expressions should be in a natural language camel-case style and therefore defined by the BPMN designer (BPMN-first approach) or upfront by the developer (software-first approach). This should on one hand force the BPMN designer to name the expected data/behavior and on the other hand help developers to understand what they have to implement. 
+All those names used to wire tasks or expressions should be in a natural language camel-case style and therefore defined by the BPMN designer (BPMN-first approach) or upfront by the developer (software-first approach). This should on one hand force the BPMN designer to name the expected data/behavior and on the other hand help developers to understand what they have to implement.
 
 The sum of those names forms the contract between the BPMN and the underlying implementation. As an example these are typical names used as part of a taxi ride workflow:
 

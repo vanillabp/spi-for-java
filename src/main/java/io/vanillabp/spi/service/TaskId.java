@@ -2,13 +2,13 @@ package io.vanillabp.spi.service;
 
 import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
-import io.vanillabp.spi.process.ProcessService;
-
 import java.lang.annotation.Documented;
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Inherited;
 import java.lang.annotation.Retention;
 import java.lang.annotation.Target;
+
+import io.vanillabp.spi.process.ProcessService;
 
 /**
  * This annotation is used to define a parameter which will be used to hand-over

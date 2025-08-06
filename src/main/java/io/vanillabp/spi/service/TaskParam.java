@@ -27,9 +27,9 @@ import java.lang.annotation.Target;
 @Documented
 public @interface TaskParam {
 
-    /**
-     * @return The name of the local variables mapped in BPMN.
-     */
-    String value();
+  /**
+   * @return The name of the local variables mapped in BPMN.
+   */
+  String value();
 
 }

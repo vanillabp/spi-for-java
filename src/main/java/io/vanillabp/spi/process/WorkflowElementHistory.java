@@ -13,11 +13,11 @@ import java.time.OffsetDateTime;
  * @param secondaryWorkflowHistoryContext The secondary workflow history context if the element is a call activity
  */
 public record WorkflowElementHistory(
-        OffsetDateTime startTime,
-        OffsetDateTime endTime,
-        String elementId,
-        WorkflowElementType elementType,
-        String error,
-        boolean isCanceled,
-        String secondaryWorkflowHistoryContext) {
+                                     OffsetDateTime startTime,
+                                     OffsetDateTime endTime,
+                                     String elementId,
+                                     WorkflowElementType elementType,
+                                     String error,
+                                     boolean isCanceled,
+                                     String secondaryWorkflowHistoryContext) {
 }
