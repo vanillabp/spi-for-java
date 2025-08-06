@@ -14,10 +14,10 @@ import java.lang.annotation.Target;
 @Documented
 public @interface MultiInstanceTotal {
 
-    /**
-     * @return The name of variable/field which holds the current total number of
-     *         the multi-instance iteration.
-     */
-    String value();
+  /**
+   * @return The name of variable/field which holds the current total number of
+   *         the multi-instance iteration.
+   */
+  String value();
 
 }

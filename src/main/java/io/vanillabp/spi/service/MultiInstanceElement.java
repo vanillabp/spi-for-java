@@ -14,17 +14,17 @@ import java.lang.annotation.Target;
 @Documented
 public @interface MultiInstanceElement {
 
-    String USE_RESOLVER = "";
+  String USE_RESOLVER = "";
 
-    /**
-     * @return The name of variable/field which holds the current value of the
-     *         multi-instance iteration
-     */
-    String value() default USE_RESOLVER;
+  /**
+   * @return The name of variable/field which holds the current value of the
+   *         multi-instance iteration
+   */
+  String value() default USE_RESOLVER;
 
-    /**
-     * @return The bean-name of the resolver used to determine the current element
-     */
-    Class<? extends MultiInstanceElementResolver<?, ?>> resolverBean() default NoResolver.class;
+  /**
+   * @return The bean-name of the resolver used to determine the current element
+   */
+  Class<? extends MultiInstanceElementResolver<?, ?>> resolverBean() default NoResolver.class;
 
 }

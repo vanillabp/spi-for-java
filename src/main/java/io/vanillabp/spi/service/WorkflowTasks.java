@@ -17,6 +17,6 @@ import java.lang.annotation.Target;
 @Documented
 public @interface WorkflowTasks {
 
-    WorkflowTask[] value();
+  WorkflowTask[] value();
 
 }

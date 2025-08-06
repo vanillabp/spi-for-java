@@ -26,21 +26,23 @@ import java.lang.annotation.Target;
 @Documented
 public @interface TaskEvent {
 
-    enum Event {
-        /**
-         * filter to events on creating a task
-         */
-        CREATED,
-        /**
-         * filter to events on canceling a user task or an asynchronous task (e.g. due to boundary event)
-         */
-        CANCELED,
-        /**
-         * no filtering
-         */
-        ALL,
-    };
+  enum Event {
+    /**
+     * filter to events on creating a task
+     */
+    CREATED,
+    /**
+     * filter to events on canceling a user task or an asynchronous task (e.g. due to boundary event)
+     */
+    CANCELED,
+    /**
+     * no filtering
+     */
+    ALL,
+  };
 
-    public Event[] value() default { Event.ALL };
+  public Event[] value() default {
+      Event.ALL
+  };
 
 }
