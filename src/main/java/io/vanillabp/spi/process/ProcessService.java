@@ -9,14 +9,14 @@ import java.util.List;
  */
 public interface ProcessService<DE> {
 
-    /**
-     * Start a new workflow.
-     * 
-     * @param workflowAggregate The workflow-aggregate
-     * @return The workflow-aggregate attached to JPA
-     */
-    DE startWorkflow(
-        DE workflowAggregate);
+  /**
+   * Start a new workflow.
+   * 
+   * @param workflowAggregate The workflow-aggregate
+   * @return The workflow-aggregate attached to JPA
+   */
+  DE startWorkflow(
+      DE workflowAggregate);
 
   /**
    * Correlate a message for the workflow-aggregate's workflow or it's sub-workflows
@@ -74,7 +74,7 @@ public interface ProcessService<DE> {
 
   /**
    * Complete a user-task
-   *
+   * 
    * @param workflowAggregate The workflow-aggregate
    * @param taskId       The task-id reported previously
    * @return The workflow-aggregate attached to JPA
@@ -86,7 +86,7 @@ public interface ProcessService<DE> {
 
   /**
    * Complete a user-task by sending a BPMN error
-   *
+   * 
    * @param workflowAggregate  The workflow-aggregate
    * @param taskId        The task-id reported previously
    * @param bpmnErrorCode The error code which can be caught in BPMN by error
@@ -101,7 +101,7 @@ public interface ProcessService<DE> {
 
   /**
    * Complete an asynchronous task
-   *
+   * 
    * @param workflowAggregate The workflow-aggregate
    * @param taskId            The task-id reported previously
    * @return The workflow-aggregate attached to JPA
@@ -113,7 +113,7 @@ public interface ProcessService<DE> {
 
   /**
    * Complete an asynchronous task by sending a BPMN error
-   *
+   * 
    * @param workflowAggregate  The workflow-aggregate
    * @param taskId        The task-id reported previously
    * @param bpmnErrorCode The error code which can be caught in BPMN by error
@@ -125,7 +125,15 @@ public interface ProcessService<DE> {
       DE workflowAggregate,
       String taskId,
       String bpmnErrorCode);
-
+  
+  /**
+   * The <a href="https://github.com/vanillabp/adapter-platform-integration/wiki/Workflow-modules" target="_blank"></a>workflow-module</a>
+   * ID this process service belongs to.
+   *
+   * @return The workflow-module ID
+   */
+  String getWorkflowModuleId();
+  
   /**
    * Get all process definitions of workflows affected by this service.
    *
