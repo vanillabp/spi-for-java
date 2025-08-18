@@ -37,6 +37,14 @@
     <url>http://github.com/vanillabp/spi-for-java/tree/main</url>
   </scm>
 
+  <distributionManagement>
+    <snapshotRepository>
+      <id>github</id>
+      <name>Github Packages</name>
+      <url>https://maven.pkg.github.com/vanillabp/spi-for-java</url>
+    </snapshotRepository>
+  </distributionManagement>
+
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <version.java>17</version.java>
