@@ -3,7 +3,7 @@ package io.vanillabp.spi.service;
 import java.util.Collection;
 import java.util.Map;
 
-public interface MultiInstanceElementResolver<DE, T> {
+public interface MultiInstanceElementResolver<A, T> {
 
   interface MultiInstance<E> {
     E getElement();
@@ -11,7 +11,7 @@ public interface MultiInstanceElementResolver<DE, T> {
     int getIndex();
 
     int getTotal();
-  };
+  }
 
   /**
    * @return The name of variables/fields which hold the current value of the
@@ -32,7 +32,7 @@ public interface MultiInstanceElementResolver<DE, T> {
    * @return A value which will be passed as a parameter
    */
   T resolve(
-      DE workflowAggregate,
+      A workflowAggregate,
       Map<String, MultiInstance<Object>> multiInstances);
 
 }
