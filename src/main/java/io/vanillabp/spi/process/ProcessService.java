@@ -5,9 +5,9 @@ import java.io.InputStream;
 import java.util.List;
 
 /**
- * @param <DE> The workflow-aggregate-class
+ * @param <A> The workflow-aggregate-class
  */
-public interface ProcessService<DE> {
+public interface ProcessService<A> {
 
   /**
    * Start a new workflow.
@@ -15,8 +15,8 @@ public interface ProcessService<DE> {
    * @param workflowAggregate The workflow-aggregate
    * @return The workflow-aggregate attached to JPA
    */
-  DE startWorkflow(
-      DE workflowAggregate);
+  A startWorkflow(
+      A workflowAggregate) throws Exception;
 
   /**
    * Correlate a message for the workflow-aggregate's workflow or it's sub-workflows
@@ -26,8 +26,8 @@ public interface ProcessService<DE> {
    * @param messageName  The message name to be correlated
    * @return The workflow-aggregate attached to JPA
    */
-  DE correlateMessage(
-      DE workflowAggregate,
+  A correlateMessage(
+      A workflowAggregate,
       String messageName);
 
   /**
@@ -39,8 +39,8 @@ public interface ProcessService<DE> {
    * @param correlationId The correlation-id
    * @return The workflow-aggregate attached to JPA
    */
-  DE correlateMessage(
-      DE workflowAggregate,
+  A correlateMessage(
+      A workflowAggregate,
       String messageName,
       String correlationId);
 
@@ -53,8 +53,8 @@ public interface ProcessService<DE> {
    *                     is used as the message name.
    * @return The workflow-aggregate attached to JPA
    */
-  DE correlateMessage(
-      DE workflowAggregate,
+  A correlateMessage(
+      A workflowAggregate,
       Object message);
 
   /**
@@ -67,8 +67,8 @@ public interface ProcessService<DE> {
    * @param correlationId The correlation-id
    * @return The workflow-aggregate attached to JPA
    */
-  DE correlateMessage(
-      DE workflowAggregate,
+  A correlateMessage(
+      A workflowAggregate,
       Object message,
       String correlationId);
 
@@ -80,8 +80,8 @@ public interface ProcessService<DE> {
    * @return The workflow-aggregate attached to JPA
    * @see TaskId
    */
-  DE completeUserTask(
-      DE workflowAggregate,
+  A completeUserTask(
+      A workflowAggregate,
       String taskId);
 
   /**
@@ -94,8 +94,8 @@ public interface ProcessService<DE> {
    * @return The workflow-aggregate attached to JPA
    * @see TaskId
    */
-  DE cancelUserTask(
-      DE workflowAggregate,
+  A cancelUserTask(
+      A workflowAggregate,
       String taskId,
       String bpmnErrorCode);
 
@@ -107,8 +107,8 @@ public interface ProcessService<DE> {
    * @return The workflow-aggregate attached to JPA
    * @see TaskId
    */
-  DE completeTask(
-      DE workflowAggregate,
+  A completeTask(
+      A workflowAggregate,
       String taskId);
 
   /**
@@ -121,8 +121,8 @@ public interface ProcessService<DE> {
    * @return The workflow-aggregate attached to JPA
    * @see TaskId
    */
-  DE cancelTask(
-      DE workflowAggregate,
+  A cancelTask(
+      A workflowAggregate,
       String taskId,
       String bpmnErrorCode);
   
@@ -145,7 +145,7 @@ public interface ProcessService<DE> {
    * @throws WorkflowNotFoundException If the workflow-aggregate is not associated with a workflow
    */
   List<ProcessDefinition> getProcessDefinitions(
-      DE workflowAggregate,
+      A workflowAggregate,
       String historyContext) throws WorkflowNotFoundException;
 
   /**
@@ -169,7 +169,7 @@ public interface ProcessService<DE> {
    * @throws WorkflowNotFoundException If the workflow-aggregate is not associated with a workflow
    */
   WorkflowHistory getWorkflowHistory(
-      DE workflowAggregate,
+      A workflowAggregate,
       String historyContext) throws WorkflowNotFoundException;
 
 }
