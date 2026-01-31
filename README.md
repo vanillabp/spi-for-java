@@ -122,10 +122,14 @@ public class Ride {
 This data has a 1:1 relationship to a particular workflow (a running instance of a BPMN process).
 The Vanilla BP SPI uses a dedicated entity per workflow for storing those values. In terms of DDD this entire tree is called *an aggregate*.
 
-When using JPA for aggregate persistence, this entity might be split up into a couple of sub-entities (many-to-many, one-to-many, many-to-one relations and embedded objects) but the root of that entity-tree is the record connected to the workflow.
+When using JPA for aggregate persistence, this entity might be split up into a couple of sub-entities
+(many-to-many, one-to-many, many-to-one relations and embedded objects) but the root of that entity-tree is the record connected to the workflow.
 
 It is also possible to use another persistence technology than JPA like NoSQL databases.
-How to achieve this depends on the runtime used (e.g. [Spring Boot - Workflow aggregate persistence](https://github.com/vanillabp/spring-boot-support#workflow-aggregate-persistence)).
+To achieve this you have to provide a component implementing the interface [AggregatePersistenceAware](./src/main/java/io/vanillabp/spi/process/AggregatePersistenceAware.java).
+This component has to be specific to a certain aggregate. Depending on the platform you are using
+there might generic implementations available e.g. for JPA, MongoDB, etc. Checkout the
+[VanillaBP platform integration documentation](https://github.com/vanillabp/adapter-platform-integration/wiki/Workflow-aggregates).
 
 ### Start a workflow
 
