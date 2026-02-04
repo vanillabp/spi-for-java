@@ -1,6 +1,8 @@
 package io.vanillabp.spi.process;
 
 import io.vanillabp.spi.service.TaskId;
+import java.io.InputStream;
+import java.util.List;
 
 /**
  * @param <DE> The workflow-aggregate-class
@@ -102,5 +104,38 @@ public interface ProcessService<DE> {
      * @see TaskId
      */
     DE cancelTask(DE workflowAggregate, String taskId, String bpmnErrorCode);
+
+    /**
+     * Get all process definitions of workflows affected by this service.
+     *
+     * @param workflowAggregate The workflow-aggregate for which to get the process definitions
+     * @param historyContext Null for the primary process of the workflow or a value from
+     *                       {@link WorkflowElementHistory#secondaryWorkflowHistoryContext()}
+     *                       for secondary processes of the workflow (call activities)
+     * @return The process definitions
+     * @throws WorkflowNotFoundException If the workflow-aggregate is not associated with a workflow
+     */
+    List<ProcessDefinition> getProcessDefinitions(DE workflowAggregate, String historyContext) throws WorkflowNotFoundException;
+
+    /**
+     * Get the BPMN XML for a process definition.
+     *
+     * @param processDefinitionId The process definition id
+     * @return The BPMN XML as an input stream
+     * @throws ProcessDefinitionNotFoundException If the process definition is not found
+     */
+    InputStream getBpmnXml(String processDefinitionId) throws ProcessDefinitionNotFoundException;
+
+    /**
+     * Get the workflow history for the workflow associated with the given aggregate.
+     *
+     * @param workflowAggregate The workflow-aggregate for which to get the history
+     * @param historyContext Null for the primary process of the workflow or a value from
+     *                       {@link WorkflowElementHistory#secondaryWorkflowHistoryContext()}
+     *                       for secondary processes of the workflow (call activities)
+     * @return The workflow history
+     * @throws WorkflowNotFoundException If the workflow-aggregate is not associated with a workflow
+     */
+    WorkflowHistory getWorkflowHistory(DE workflowAggregate, String historyContext) throws WorkflowNotFoundException;
 
 }

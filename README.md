@@ -23,6 +23,7 @@ The SPI was developed as part of the [Taxi Ride Blueprint](https://github.com/ph
     1. [Call-activities](#call-activities)
     1. [Multi-instance](#multi-instance)
     1. [User tasks and asynchronous tasks](#user-tasks-and-asynchronous-tasks)
+    1. [Viewing BPMN and execution history of workflows](#viewing-bpmn-and-execution-history-of-workflows)
 1. [About the SPI](#about-the-spi)
     1. [Prerequisites](#prerequisites)
     1. [Motivation](#motivation)
@@ -589,6 +590,125 @@ public class DriverGuiController {
     }
 }
 ```
+
+## Viewing BPMN and execution history of workflows
+
+Some business applications might require viewing the BPMN and execution history of workflows.
+There are open source tools available to do so (e.g. https://bpmn.io/). These tools are fed with the BPMN-XML of
+a workflow and the workflow's execution history.
+
+*VanillaBP* provides all data necessary to feed a BPMN viewer:
+
+1. **The process definitions used by a certain workflow:**<br>
+   ```java
+   List<ProcessDefinition> getProcessDefinitions(
+      DE workflowAggregate,
+      String historyContext) throws WorkflowNotFoundException;
+   ```
+2. **The BPMN-XML of a process definition:**<br>
+   ```java
+   InputStream getBpmnXml(String processDefinitionId) throws ProcessDefinitionNotFoundException;
+   ```
+3. **The execution history of a certain workflow:**<br>
+   ```java
+   WorkflowHistory getWorkflowHistory(
+       DE workflowAggregate,
+       String historyContext) throws WorkflowNotFoundException;
+   ```
+
+These parts play together to provide a complete BPMN-XML and execution history of a certain workflow.
+
+### Showing the BPMN of a simple workflow
+
+Simple workflows might be defined by a single process definition. Calling the method `getProcessDefinitions`
+with a workflow-aggregate and a null history-context returns a list containing exactly one process definition.
+The returned [ProcessDefinition](./src/main/java/io/vanillabp/spi/process/ProcessDefinition.java)
+contains meta-data about the process (the bpmn-process-id and the version of the BPMN
+used to run the workflow) next to a process definition ID. The process definition ID can be used to retrieve
+the BPMN-XML using the method `getBpmnXml`:
+
+```java
+@Controller
+public class RideController {
+    @Autowired
+    private ProcessService<Ride> rideService;
+   
+    @Autowired
+    private RideRepository rides;
+
+    @GetMapping("/{rideId}/bpmn")
+    public ResponseEntity<InputStreamResource> getBpmnXml(
+            @PathVariable final String rideId) {
+        var ride = rides.get(rideId);
+        var processDefinitions = rideService.getProcessDefinitions(ride, null);
+        var xml = service.getBpmnXml(processDefinitions.getFirst().id());
+        return ResponseEntity.ok(new InputStreamResource(xml));
+    }
+}
+```
+
+Typically, users want to see the BPMN colored according to the current state of the workflow.
+The data necessary for this is provided by the method `getWorkflowHistory`:
+
+```java
+    @GetMapping("/{rideId}/workflow-history")
+    public ResponseEntity<WorkflowHistory> getWorkflowHistory(
+            @PathVariable final String rideId) {
+        var ride = rides.get(rideId);
+        var workflowHistory = service.getWorkflowHistory(ride, null);
+        return ResponseEntity.ok(workflowHistory);
+    }
+```
+
+The [WorkflowHistory](./src/main/java/io/vanillabp/spi/process/WorkflowHistory.java) primarily consists of the time 
+when the workflow is started, the time when the workflow ended (if) and the execution history for each element 
+of the workflow (see `elementsHistory`).
+
+Items in `elementsHistory` are sorted by their execution. Each
+[WorkflowElementHistory](./src/main/java/io/vanillabp/spi/process/WorkflowElementHistory.java)
+contains when the element was executed (start- and end-time if already ended),
+whether there is an error or the element was canceled). The element id given
+can be used to find the right element in the BPMN viewer for proper coloring.
+
+*Hint:* It depends on the BPMS used or its configuration whether the
+element history is available. If not available, the list is null.
+Additionally, which items are tracked is also specific to the BPMS. Some
+record only activities (like service tasks) and others also include
+intermediate elements (like flow nodes and gateways).
+
+### Showing the BPMN of a complex workflow
+
+Sometimes a BPMN process model becomes too complex to be displayed in a single process definition.
+This can be done by splitting up into multiple process definitions
+(each stored in a separate BPMN file) and using them in the main process by [call-activities](#call-activities).
+This builds a tree structure of process definitions.
+
+Viewing those kinds of workflows requires a bit more work. The viewer may allow digging into the tree structure
+by clicking call-activities in the BPMN to show the selected sub-process BPMN model. Here one has to distinguish
+two situations:
+
+1. The call-activity was not executed so far. The user expects to see the version of BPMN of the sub-process
+   which will be executed next.
+2. The call-activity was already executed. The user expects to see the version of BPMN of the sub-process
+   which was executed.
+
+When executing long-running workflows, intermediate updates of the software and the BPMN model might cause
+updates of sub-processes. So, a recently executed sub-process might be different from the one which will be executed
+next.
+
+The method `getProcessDefinitions` returns a list of process definitions include all sub-processes in the
+version of future executions. The result's attribute `usedByElements` is null for the main process definition and
+contains the ids of all elements that use this definition for call-activities.
+
+To view a call-activity's model including coloring of elements already executed, the
+[WorkflowElementHistory](./src/main/java/io/vanillabp/spi/process/WorkflowElementHistory.java)
+returned by the method `getWorkflowHistory` includes the attribute `secondaryWorkflowHistoryContext`
+for call-activity elements already executed. This value can be used to dig down in the tree structure of
+process definitions and retrieve the next level using the method `getProcessDefinitions` passing the history-context
+of the call-activity's execution.
+
+A viewer might show the path of steps already digged down, each linked as a navigation to go back to upper processes 
+or the main process.
 
 ## About the SPI
 
