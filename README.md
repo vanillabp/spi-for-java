@@ -608,7 +608,7 @@ a workflow and the workflow's execution history.
 
    ```java
    List<ProcessDefinition> getProcessDefinitions(
-      DE workflowAggregate,
+      A workflowAggregate,
       String historyContext) throws WorkflowNotFoundException;
    ```
 2. **The BPMN-XML of a process definition:**<br>
@@ -620,7 +620,7 @@ a workflow and the workflow's execution history.
 
    ```java
    WorkflowHistory getWorkflowHistory(
-       DE workflowAggregate,
+       A workflowAggregate,
        String historyContext) throws WorkflowNotFoundException;
    ```
 

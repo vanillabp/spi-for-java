@@ -17,7 +17,7 @@ public interface ProcessService<A> {
    * @return The workflow-aggregate attached to JPA
    */
   A startWorkflow(
-      A workflowAggregate) throws Exception;
+      A workflowAggregate);
 
   /**
    * Starts a new workflow by message start event.
@@ -152,7 +152,7 @@ public interface ProcessService<A> {
       A workflowAggregate,
       String taskId,
       String bpmnErrorCode);
-  
+
   /**
    * The <a href="https://github.com/vanillabp/adapter-platform-integration/wiki/Workflow-modules" target="_blank"></a>workflow-module</a>
    * ID this process service belongs to.
@@ -160,7 +160,7 @@ public interface ProcessService<A> {
    * @return The workflow-module ID
    */
   String getWorkflowModuleId();
-  
+
   /**
    * The <a href="https://github.com/vanillabp/adapter-platform-integration/wiki/Workflow-modules" target="_blank"></a>workflow-module</a>
    * ID this process service belongs to.
