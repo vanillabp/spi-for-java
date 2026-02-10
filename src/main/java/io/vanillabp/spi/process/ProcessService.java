@@ -1,8 +1,9 @@
 package io.vanillabp.spi.process;
 
-import io.vanillabp.spi.service.TaskId;
 import java.io.InputStream;
 import java.util.List;
+
+import io.vanillabp.spi.service.TaskId;
 
 /**
  * @param <A> The workflow-aggregate-class
@@ -16,7 +17,7 @@ public interface ProcessService<A> {
    * @return The workflow-aggregate attached to JPA
    */
   A startWorkflow(
-      A workflowAggregate) throws Exception;
+      A workflowAggregate);
 
   /**
    * Correlate a message for the workflow-aggregate's workflow or it's sub-workflows
@@ -125,7 +126,7 @@ public interface ProcessService<A> {
       A workflowAggregate,
       String taskId,
       String bpmnErrorCode);
-  
+
   /**
    * The <a href="https://github.com/vanillabp/adapter-platform-integration/wiki/Workflow-modules" target="_blank"></a>workflow-module</a>
    * ID this process service belongs to.
@@ -133,7 +134,7 @@ public interface ProcessService<A> {
    * @return The workflow-module ID
    */
   String getWorkflowModuleId();
-  
+
   /**
    * Get all process definitions of workflows affected by this service.
    *

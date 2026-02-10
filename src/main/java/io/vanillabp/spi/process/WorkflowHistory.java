@@ -10,8 +10,8 @@ import java.util.List;
  * @param elementsHistory History of workflow elements processed or null if not supported by the underlying BPMS
  */
 public record WorkflowHistory(
-        String processDefinitionId,
-        OffsetDateTime startTime,
-        OffsetDateTime endTime,
-        List<WorkflowElementHistory> elementsHistory) {
+                              String processDefinitionId,
+                              OffsetDateTime startTime,
+                              OffsetDateTime endTime,
+                              List<WorkflowElementHistory> elementsHistory) {
 }

@@ -9,29 +9,29 @@ The SPI was developed as part of the [Taxi Ride Blueprint](https://github.com/ph
 ## Content
 
 1. [How it looks like](#how-it-looks-like)
-1. [Usage](#usage)
-    1. [Process-specific workflow-aggregate](#process-specific-workflow-aggregate)
-    1. [Start a workflow](#start-a-workflow)
-    1. [Wire up a process](#wire-up-a-process)
-    1. [Wire up a task](#wire-up-a-task)
-    1. [Wire up an expression](#wire-up-an-expression)
-1. [Advanced topics](#advanced-topics)
-    1. [Natural ids](#natural-ids)
-    1. [Process variables](#process-variables)
-    1. [Correlate an incoming message](#correlate-an-incoming-message)
-    1. [Versioning of BPMN business-processes](#versioning-of-bpmn-business-processes)
-    1. [Call-activities](#call-activities)
-    1. [Multi-instance](#multi-instance)
-    1. [User tasks and asynchronous tasks](#user-tasks-and-asynchronous-tasks)
-    1. [Viewing BPMN and execution history of workflows](#viewing-bpmn-and-execution-history-of-workflows)
-1. [About the SPI](#about-the-spi)
-    1. [Prerequisites](#prerequisites)
-    1. [Motivation](#motivation)
-    1. [Goals](#goals)
-    1. [Available Adapters](#available-adapters)
-    1. [Concept](#concept)
-1. [Noteworthy & Contributors](#noteworthy--contributors)
-1. [License](#license)
+2. [Usage](#usage)
+   1. [Process-specific workflow-aggregate](#process-specific-workflow-aggregate)
+   2. [Start a workflow](#start-a-workflow)
+   3. [Wire up a process](#wire-up-a-process)
+   4. [Wire up a task](#wire-up-a-task)
+   5. [Wire up an expression](#wire-up-an-expression)
+3. [Advanced topics](#advanced-topics)
+   1. [Natural ids](#natural-ids)
+   2. [Process variables](#process-variables)
+   3. [Correlate an incoming message](#correlate-an-incoming-message)
+   4. [Versioning of BPMN business-processes](#versioning-of-bpmn-business-processes)
+   5. [Call-activities](#call-activities)
+   6. [Multi-instance](#multi-instance)
+   7. [User tasks and asynchronous tasks](#user-tasks-and-asynchronous-tasks)
+   8. [Viewing BPMN and execution history of workflows](#viewing-bpmn-and-execution-history-of-workflows)
+4. [About the SPI](#about-the-spi)
+   1. [Prerequisites](#prerequisites)
+   2. [Motivation](#motivation)
+   3. [Goals](#goals)
+   4. [Available Adapters](#available-adapters)
+   5. [Concept](#concept)
+5. [Noteworthy & Contributors](#noteworthy--contributors)
+6. [License](#license)
 
 ## How it looks like
 
@@ -604,19 +604,22 @@ a workflow and the workflow's execution history.
 *VanillaBP* provides all data necessary to feed a BPMN viewer:
 
 1. **The process definitions used by a certain workflow:**<br>
+
    ```java
    List<ProcessDefinition> getProcessDefinitions(
-      DE workflowAggregate,
+      A workflowAggregate,
       String historyContext) throws WorkflowNotFoundException;
    ```
 2. **The BPMN-XML of a process definition:**<br>
+
    ```java
    InputStream getBpmnXml(String processDefinitionId) throws ProcessDefinitionNotFoundException;
    ```
 3. **The execution history of a certain workflow:**<br>
+
    ```java
    WorkflowHistory getWorkflowHistory(
-       DE workflowAggregate,
+       A workflowAggregate,
        String historyContext) throws WorkflowNotFoundException;
    ```
 
@@ -655,17 +658,17 @@ Typically, users want to see the BPMN colored according to the current state of 
 The data necessary for this is provided by the method `getWorkflowHistory`:
 
 ```java
-    @GetMapping("/{rideId}/workflow-history")
-    public ResponseEntity<WorkflowHistory> getWorkflowHistory(
-            @PathVariable final String rideId) {
-        var ride = rides.get(rideId);
-        var workflowHistory = service.getWorkflowHistory(ride, null);
-        return ResponseEntity.ok(workflowHistory);
-    }
+@GetMapping("/{rideId}/workflow-history")
+public ResponseEntity<WorkflowHistory> getWorkflowHistory(
+        @PathVariable final String rideId) {
+    var ride = rides.get(rideId);
+    var workflowHistory = service.getWorkflowHistory(ride, null);
+    return ResponseEntity.ok(workflowHistory);
+}
 ```
 
-The [WorkflowHistory](./src/main/java/io/vanillabp/spi/process/WorkflowHistory.java) primarily consists of the time 
-when the workflow is started, the time when the workflow ended (if) and the execution history for each element 
+The [WorkflowHistory](./src/main/java/io/vanillabp/spi/process/WorkflowHistory.java) primarily consists of the time
+when the workflow is started, the time when the workflow ended (if) and the execution history for each element
 of the workflow (see `elementsHistory`).
 
 Items in `elementsHistory` are sorted by their execution. Each
@@ -711,7 +714,7 @@ for call-activity elements already executed. This value can be used to dig down 
 process definitions and retrieve the next level using the method `getProcessDefinitions` passing the history-context
 of the call-activity's execution.
 
-A viewer might show the path of steps already digged down, each linked as a navigation to go back to upper processes 
+A viewer might show the path of steps already digged down, each linked as a navigation to go back to upper processes
 or the main process.
 
 ## About the SPI
