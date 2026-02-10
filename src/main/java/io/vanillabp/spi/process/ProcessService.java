@@ -15,7 +15,7 @@ public interface ProcessService<DE> {
      * @param workflowAggregate The workflow-aggregate
      * @return The workflow-aggregate attached to JPA
      */
-    DE startWorkflow(DE workflowAggregate) throws Exception;
+    DE startWorkflow(DE workflowAggregate);
 
     /**
      * Correlate a message for the workflow-aggregate's workflow or it's sub-workflows
