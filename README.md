@@ -345,6 +345,7 @@ One can use the `ProcessService` to perform that message correlation:
 ```
 
 *Hint:* If the message correlates to a message start event, then a new workflow is created.
+In this situation the aggregate must not be persisted before.
 
 Additionally, if there are several receive tasks "waiting" for the same message then you need to define a correlation-id as a third parameter of `correlateMessage`.
 
