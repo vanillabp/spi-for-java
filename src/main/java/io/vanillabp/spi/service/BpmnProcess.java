@@ -1,12 +1,12 @@
 package io.vanillabp.spi.service;
 
-import static java.lang.annotation.ElementType.TYPE;
-import static java.lang.annotation.RetentionPolicy.RUNTIME;
-
 import java.lang.annotation.Documented;
 import java.lang.annotation.Inherited;
 import java.lang.annotation.Retention;
 import java.lang.annotation.Target;
+
+import static java.lang.annotation.ElementType.TYPE;
+import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
 /**
  * Used to wire workflow-services to the processes they are responsible for.
@@ -17,9 +17,9 @@ import java.lang.annotation.Target;
 @Documented
 public @interface BpmnProcess {
 
-    static String ALL_VERSIONS = "*";
+    String ALL_VERSIONS = "*";
 
-    static String USE_CLASS_NAME = "";
+    String USE_CLASS_NAME = "";
 
     /**
      * @return The process-id as defined in the BPMN for which the annotated service
@@ -45,11 +45,5 @@ public @interface BpmnProcess {
      * @return The version of the process this method belongs to
      */
     String[] version() default ALL_VERSIONS;
-    
-    /**
-     * @return Whether this is the BPMN process id used to start new workflows and
-     *         correlate messages.
-     */
-    boolean primary() default true;
 
 }
