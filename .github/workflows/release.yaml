@@ -1,0 +1,120 @@
+name: Release 🚀
+
+on:
+  workflow_dispatch:
+    inputs:
+      release_version:
+        description: 'Version to release (e.g. 1.2.3)'
+        required: true
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Extract last released version
+        run: |
+          CURRENT_VERSION=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)
+          SNAP_BASE=$(echo "$CURRENT_VERSION" | sed 's/-SNAPSHOT//')
+          echo "Last released version: $SNAP_BASE"
+          echo "LAST_RELEASED_VERSION=$SNAP_BASE" >> $GITHUB_ENV
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: adopt
+          java-version: 17
+          cache: maven
+          server-id: vanillabp-central
+          # for secrets use env variables (set in each step which needs it) to avoid leaking them in files
+          server-username: MAVEN_USERNAME
+          server-password: MAVEN_PASSWORD
+          gpg-passphrase: GPG_PASSPHRASE
+          gpg-private-key: ${{ secrets.MAVEN_GPG_PRIVATE_KEY }}
+
+      - name: Create release branch
+        run: |
+          git checkout -b release/${{ github.event.inputs.release_version }} origin/main
+
+      - name: Set Maven release version
+        run: |
+          mvn --batch-mode versions:set -DnewVersion=${{ github.event.inputs.release_version }}
+          find . -name pom.xml.versionsBackup -delete
+
+      - name: Check for SNAPSHOT dependencies
+        run: |
+          SNAPSHOT_POMS=$(grep -R "<.*>.*SNAPSHOT<\/.*>" . --include=pom.xml || true)
+          
+          if [ -n "$SNAPSHOT_POMS" ] || [ -n "$SNAPSHOT_PKGS" ]; then
+            echo "::warning::Found SNAPSHOT dependencies in the project:"
+            [ -n "$SNAPSHOT_POMS" ] && echo "$SNAPSHOT_POMS"
+          else
+            echo "✅ No SNAPSHOT dependencies found."
+          fi
+          # Always exit successfully
+          exit 0
+
+      - name: Build & deploy to Maven Central
+        run: |
+          mvn --batch-mode -DskipTests -DskipITs -Dgpg.passphrase=$GPG_PASSPHRASE \
+          clean deploy -P release,central-portal
+        env:
+          GPG_PASSPHRASE: ${{ secrets.MAVEN_GPG_PASSPHRASE }}
+          MAVEN_USERNAME: ${{ secrets.MAVEN_CENTRAL_PORTAL_TOKEN_USER }}
+          MAVEN_PASSWORD: ${{ secrets.MAVEN_CENTRAL_PORTAL_TOKEN_PW }}
+
+      - name: Commit release version
+        run: |
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
+          git add -A
+          git commit -m "Prepare release v${{ github.event.inputs.release_version }}"
+
+      - name: Create Git tag
+        run: |
+          git tag -a "${{ github.event.inputs.release_version }}" -m "Release ${{ github.event.inputs.release_version }}"
+          git push origin --tags
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ github.event.inputs.release_version }}
+          name: v${{ github.event.inputs.release_version }}
+          generate_release_notes: true
+          append_body: |
+            
+            **Full Changelog:** [`${{ env.LAST_RELEASED_VERSION }}...${{ github.event.inputs.release_version }}`](https://github.com/vanillabp/spring-boot-support/compare/${{ env.LAST_RELEASED_VERSION }}...${{ github.event.inputs.release_version }})
+          draft: true
+
+      - name: Calculate next snapshot version
+        run: |
+          RELEASE_VERSION=${{ github.event.inputs.release_version }}
+          IFS='.' read -r major minor patch <<< "$RELEASE_VERSION"
+          NEXT_PATCH=$((patch + 1))
+          echo "NEXT_SNAPSHOT=$major.$minor.${NEXT_PATCH}-SNAPSHOT" >> $GITHUB_ENV
+
+      - name: Set next snapshot version
+        run: |
+          mvn --batch-mode versions:set -DnewVersion=${{ env.NEXT_SNAPSHOT }}
+          find . -name pom.xml.versionsBackup -delete
+          mvn --batch-mode -DskipTests -DskipITs package
+
+      - name: Commit next snapshot version
+        run: |  
+          git add -A
+          git commit -m "Set next version ${{ env.NEXT_SNAPSHOT }}"
+          git push origin HEAD:release/${{ github.event.inputs.release_version }}
+
+      - name: Create PR to merge release branch into main
+        run: |
+          gh auth login --with-token <<< "${{ secrets.GITHUB_TOKEN }}"
+          gh pr create \
+            --title "Merge release/${{ github.event.inputs.release_version }} into main" \
+            --body "Automated PR to merge release branch." \
+            --base main \
+            --head release/${{ github.event.inputs.release_version }}
