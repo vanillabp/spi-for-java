@@ -126,10 +126,7 @@ When using JPA for aggregate persistence, this entity might be split up into a c
 (many-to-many, one-to-many, many-to-one relations and embedded objects) but the root of that entity-tree is the record connected to the workflow.
 
 It is also possible to use another persistence technology than JPA like NoSQL databases.
-To achieve this you have to provide a component implementing the interface [AggregatePersistenceAware](./src/main/java/io/vanillabp/spi/process/AggregatePersistenceAware.java).
-This component has to be specific to a certain aggregate. Depending on the platform you are using
-there might generic implementations available e.g. for JPA, MongoDB, etc. Checkout the
-[VanillaBP platform integration documentation](https://github.com/vanillabp/adapter-platform-integration/wiki/Workflow-aggregates).
+Please read the platform integration documentation for details.
 
 ### Start a workflow
 
