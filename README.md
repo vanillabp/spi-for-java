@@ -57,9 +57,9 @@ public class TaxiRide {
         
         final var ride = new Ride();
         ...
-        // start the workflow by correlation of the message start event
+        // start the workflow by the message start event
         return processService
-                .correlateMessage(ride, "RideBooked")
+                .startWorkflowByMessage(ride, "RideBooked")
                 .getRideId();
     }
     
@@ -147,6 +147,8 @@ public void rideBooked(RideRequest request) {
      rideService.startWorkflow(ride);
 }
 ```
+
+If the process starts with a message start event instead of a plain start event, use `startWorkflowByMessage(aggregate, messageName)` instead.
 
 ### Wire up a process
 
@@ -325,6 +327,8 @@ Some BPMN elements are meant to wait for external messages like receive tasks an
 
 However, the event of the incoming message is also used to make the workflow wake up and process whatever comes after the "sleeping" receive task. This mechanism is called message correlation and is based on the message's name registered for the receive task.
 
+*Important:* The content of the message is *never* transmitted to the BPMS - the workflow aggregate is the single source of truth. BPMN logic (expressions, conditions) reads data from the workflow aggregate, not from message payloads. So incorporate any data of the incoming message into the workflow aggregate before correlating the message. The same applies to starting workflows by message (`startWorkflowByMessage`).
+
 One can use the `ProcessService` to perform that message correlation:
 
 ```java
@@ -337,11 +341,11 @@ One can use the `ProcessService` to perform that message correlation:
     public void confirmRide(RideConfirmation message) {
          var ride = rides.get(message.getRideId());
          ride.setDriver(message.getDriverId());
-         rideService.correlateMessage(ride, message);
+         rideService.correlateMessage(ride, "RideConfirmation");
     }
 ```
 
-*Hint:* If the message correlates to a message start event, then a new workflow is created.
+*Hint:* To start a new workflow by a message start event use `startWorkflowByMessage` instead.
 In this situation the aggregate must not be persisted before.
 
 Additionally, if there are several receive tasks "waiting" for the same message then you need to define a correlation-id as a third parameter of `correlateMessage`.

@@ -12,7 +12,7 @@ public interface ProcessService<A> {
 
   /**
    * Start a new workflow.
-   * 
+   *
    * @param workflowAggregate The workflow-aggregate
    * @return The workflow-aggregate attached to JPA
    */
@@ -21,30 +21,33 @@ public interface ProcessService<A> {
 
   /**
    * Starts a new workflow by message start event.
+   * <p>
+   * The message's content is <i>never</i> transmitted to the BPMS: the
+   * workflow aggregate is the single source of truth. BPMN logic
+   * (expressions, conditions) reads data from the workflow aggregate, not
+   * from message payloads. Incorporate any data of the incoming message into
+   * the workflow aggregate before calling this method.
    *
    * @param workflowAggregate The workflow-aggregate
    * @param messageName The message name
    * @return The workflow-aggregate attached to JPA
    */
-  DE startWorkflowByMessage(
-      DE workflowAggregate,
-      String messageName);
+  default A startWorkflowByMessage(
+      A workflowAggregate,
+      String messageName) {
+    throw new UnsupportedOperationException(
+        "startWorkflowByMessage is implemented by a VanillaBP adapter");
+  }
 
   /**
-   * Starts a new workflow by message start event.
-   *
-   * @param workflowAggregate The workflow-aggregate
-   * @param message      The message. The object's class simple name
-   *                     is used as the message name.
-   * @return The workflow-aggregate attached to JPA
-   */
-  DE startWorkflowByMessage(
-      DE workflowAggregate,
-      Object message);
-
-  /**
-   * Correlate a message for the workflow-aggregate's workflow or it's sub-workflows
+   * Correlate a message for the workflow-aggregate's workflow or its sub-workflows
    * (call-activities).
+   * <p>
+   * The message's content is <i>never</i> transmitted to the BPMS: the
+   * workflow aggregate is the single source of truth. BPMN logic
+   * (expressions, conditions) reads data from the workflow aggregate, not
+   * from message payloads. Incorporate any data of the incoming message into
+   * the workflow aggregate before calling this method.
    *
    * @param workflowAggregate The workflow-aggregate
    * @param messageName  The message name to be correlated
@@ -55,8 +58,14 @@ public interface ProcessService<A> {
       String messageName);
 
   /**
-   * Correlate a message for the workflow-aggregate's workflow or it's sub-workflows
+   * Correlate a message for the workflow-aggregate's workflow or its sub-workflows
    * (call-activities).
+   * <p>
+   * The message's content is <i>never</i> transmitted to the BPMS: the
+   * workflow aggregate is the single source of truth. BPMN logic
+   * (expressions, conditions) reads data from the workflow aggregate, not
+   * from message payloads. Incorporate any data of the incoming message into
+   * the workflow aggregate before calling this method.
    *
    * @param workflowAggregate  The workflow-aggregate
    * @param messageName   The message name to be correlated
@@ -69,39 +78,8 @@ public interface ProcessService<A> {
       String correlationId);
 
   /**
-   * Correlate a message for the workflow-aggregate's workflow or it's sub-workflows
-   * (call-activities).
-   * <p>
-   * <i>Deprecated:/i> In case the aggregate has not yet been persisted, the message is assumed as a message-start-event.
-   * Please use {@link #startWorkflowByMessage(DE, Object)} instead.
-   *
-   * @param workflowAggregate The workflow-aggregate
-   * @param message      The message to correlate. The object's class simple name
-   *                     is used as the message name.
-   * @return The workflow-aggregate attached to JPA
-   */
-  A correlateMessage(
-      A workflowAggregate,
-      Object message);
-
-  /**
-   * Correlate a message for the workflow-aggregate's workflow or it's sub-workflows
-   * (call-activities).
-   *
-   * @param workflowAggregate  The workflow-aggregate
-   * @param message       The message to correlate. The object's class simple name
-   *                      is used as the message name.
-   * @param correlationId The correlation-id
-   * @return The workflow-aggregate attached to JPA
-   */
-  A correlateMessage(
-      A workflowAggregate,
-      Object message,
-      String correlationId);
-
-  /**
    * Complete a user-task
-   * 
+   *
    * @param workflowAggregate The workflow-aggregate
    * @param taskId       The task-id reported previously
    * @return The workflow-aggregate attached to JPA
@@ -113,7 +91,7 @@ public interface ProcessService<A> {
 
   /**
    * Complete a user-task by sending a BPMN error
-   * 
+   *
    * @param workflowAggregate  The workflow-aggregate
    * @param taskId        The task-id reported previously
    * @param bpmnErrorCode The error code which can be caught in BPMN by error
@@ -128,7 +106,7 @@ public interface ProcessService<A> {
 
   /**
    * Complete an asynchronous task
-   * 
+   *
    * @param workflowAggregate The workflow-aggregate
    * @param taskId            The task-id reported previously
    * @return The workflow-aggregate attached to JPA
@@ -140,7 +118,7 @@ public interface ProcessService<A> {
 
   /**
    * Complete an asynchronous task by sending a BPMN error
-   * 
+   *
    * @param workflowAggregate  The workflow-aggregate
    * @param taskId        The task-id reported previously
    * @param bpmnErrorCode The error code which can be caught in BPMN by error
@@ -154,15 +132,7 @@ public interface ProcessService<A> {
       String bpmnErrorCode);
 
   /**
-   * The <a href="https://github.com/vanillabp/adapter-platform-integration/wiki/Workflow-modules" target="_blank"></a>workflow-module</a>
-   * ID this process service belongs to.
-   *
-   * @return The workflow-module ID
-   */
-  String getWorkflowModuleId();
-
-  /**
-   * The <a href="https://github.com/vanillabp/adapter-platform-integration/wiki/Workflow-modules" target="_blank"></a>workflow-module</a>
+   * The <a href="https://github.com/vanillabp/adapter-platform-integration/wiki/Workflow-modules" target="_blank">workflow-module</a>
    * ID this process service belongs to.
    *
    * @return The workflow-module ID
@@ -179,9 +149,12 @@ public interface ProcessService<A> {
    * @return The process definitions
    * @throws WorkflowNotFoundException If the workflow-aggregate is not associated with a workflow
    */
-  List<ProcessDefinition> getProcessDefinitions(
+  default List<ProcessDefinition> getProcessDefinitions(
       A workflowAggregate,
-      String historyContext) throws WorkflowNotFoundException;
+      String historyContext) throws WorkflowNotFoundException {
+    throw new UnsupportedOperationException(
+        "getProcessDefinitions is implemented by a VanillaBP adapter");
+  }
 
   /**
    * Get the BPMN XML for a process definition.
@@ -190,8 +163,11 @@ public interface ProcessService<A> {
    * @return The BPMN XML as an input stream
    * @throws ProcessDefinitionNotFoundException If the process definition is not found
    */
-  InputStream getBpmnXml(
-      String processDefinitionId) throws ProcessDefinitionNotFoundException;
+  default InputStream getBpmnXml(
+      String processDefinitionId) throws ProcessDefinitionNotFoundException {
+    throw new UnsupportedOperationException(
+        "getBpmnXml is implemented by a VanillaBP adapter");
+  }
 
   /**
    * Get the workflow history for the workflow associated with the given aggregate.
@@ -203,8 +179,11 @@ public interface ProcessService<A> {
    * @return The workflow history
    * @throws WorkflowNotFoundException If the workflow-aggregate is not associated with a workflow
    */
-  WorkflowHistory getWorkflowHistory(
+  default WorkflowHistory getWorkflowHistory(
       A workflowAggregate,
-      String historyContext) throws WorkflowNotFoundException;
+      String historyContext) throws WorkflowNotFoundException {
+    throw new UnsupportedOperationException(
+        "getWorkflowHistory is implemented by a VanillaBP adapter");
+  }
 
 }

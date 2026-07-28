@@ -36,8 +36,8 @@ public @interface BpmnProcess {
    * <li><i>*</i>: all versions
    * <li><i>1</i>: only version &quot;1&quot;
    * <li><i>1-3</i>: only versions &quot;1&quot;, &quot;2&quot; and &quot;3&quot;
-   * <li><i>&gt;3</i>: only versions less than &quot;3&quot;
-   * <li><i>&lt;3</i>: only versions higher than &quot;3&quot;</li>
+   * <li><i>&gt;3</i>: only versions higher than &quot;3&quot;
+   * <li><i>&lt;3</i>: only versions less than &quot;3&quot;</li>
    * </ul>
    *
    * @return The version of the process this method belongs to
