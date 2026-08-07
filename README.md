@@ -6,6 +6,8 @@ The SPI was developed as part of the [Taxi Ride Blueprint](https://github.com/ph
 
 *Heads up:* If you want to learn about the things we had in mind creating this SPI then don't miss to also read the [About the SPI](#about-the-spi) section afterwards :wink:. It also includes links to [available adapters](#available-adapters) to use this SPI with an existing workflow system.
 
+*This README documents the SPI itself.* How you set it up in an application — workflow modules, aggregate persistence, configuration, and the platform you run on (Spring Boot, Quarkus) — is documented in the [VanillaBP wiki](https://github.com/vanillabp/adapter-platform-integration/wiki), which also links to each BPMS adapter's own wiki.
+
 ## Content
 
 1. [How it looks like](#how-it-looks-like)
@@ -375,8 +377,9 @@ Valid formats:
 * '>3': only versions higher than "3"
 * '>=3': only versions higher than or equal to "3"
 
-*Heads up:* This feature is not yet implemented but already prepared in code. Fill your annotations
-properly to benefit from it once it's available.
+*Heads up:* VanillaBP 2 evaluates these ranges when it picks the method for a task, but no BPMS adapter reports the
+version of the running process yet — so today a task is matched by the methods whose range covers *all* versions
+(no attribute or `'*'`). Annotate properly to benefit from it as soon as an adapter supplies the version.
 
 ### Call-activities
 
