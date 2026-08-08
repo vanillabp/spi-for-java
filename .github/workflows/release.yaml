@@ -19,10 +19,25 @@ jobs:
 
       - name: Extract last released version
         run: |
-          CURRENT_VERSION=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)
-          SNAP_BASE=$(echo "$CURRENT_VERSION" | sed 's/-SNAPSHOT//')
-          echo "Last released version: $SNAP_BASE"
-          echo "LAST_RELEASED_VERSION=$SNAP_BASE" >> $GITHUB_ENV
+          apiUrl="https://api.github.com/repos/${GITHUB_REPOSITORY}/releases/latest"
+          lastReleasedVersionApiResult=$(curl -s \
+            -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
+            -H "Accept: application/vnd.github+json" \
+            "${apiUrl}")
+          lastReleasedVersion=$(echo "${lastReleasedVersionApiResult}" \
+            | jq -r '.tag_name')
+          if [ "${lastReleasedVersion}" = "null" ] || [ -z "${lastReleasedVersion}" ]; then
+            echo "No GitHub release found using ${apiUrl}, falling back to first commit"
+
+            git fetch --quiet --depth=1 origin
+            firstCommit=$(git rev-list --max-parents=0 HEAD)
+
+            lastReleasedVersion="${firstCommit}"
+          else
+            lastReleasedVersion="${lastReleasedVersion#v}"
+          fi
+          echo "LAST_RELEASED_VERSION=${lastReleasedVersion}" >> "${GITHUB_ENV}"
+          echo "Last released version: ${lastReleasedVersion}"
 
       - name: Setup Java
         uses: actions/setup-java@v4
@@ -88,7 +103,7 @@ jobs:
           generate_release_notes: true
           append_body: |
             
-            **Full Changelog:** [`${{ env.LAST_RELEASED_VERSION }}...${{ github.event.inputs.release_version }}`](https://github.com/vanillabp/spring-boot-support/compare/${{ env.LAST_RELEASED_VERSION }}...${{ github.event.inputs.release_version }})
+            **Full Changelog:** [`${{ env.LAST_RELEASED_VERSION }}...${{ github.event.inputs.release_version }}`](https://github.com/vanillabp/spi-for-java/compare/${{ env.LAST_RELEASED_VERSION }}...${{ github.event.inputs.release_version }})
           draft: true
 
       - name: Calculate next snapshot version
