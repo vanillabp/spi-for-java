@@ -152,6 +152,30 @@ public void rideBooked(RideRequest request) {
 
 If the process starts with a message start event instead of a plain start event, use `startWorkflowByMessage(aggregate, messageName)` instead.
 
+#### Workflows the BPMS starts
+
+Some processes start without anybody asking: a timer start event fires, a signal start event receives a broadcast, or a conditional start event's condition becomes true. Nobody hands VanillaBP an aggregate then, so VanillaBP builds one: it instantiates the aggregate class (which needs a constructor without arguments), assigns an ID and copies the process variables the model set into attributes of the same name.
+
+Annotate a method of your workflow service if you want a say - to build the aggregate yourself:
+
+```java
+@WorkflowStartedByBpms
+public Settlement buildAggregate(BpmsStartTrigger trigger) {
+     return new Settlement(trigger.time());
+}
+```
+
+or to enrich the one VanillaBP built:
+
+```java
+@WorkflowStartedByBpms(id = "DailySettlementTimer")
+public void enrich(Settlement settlement, @TaskParam("region") String region) {
+     settlement.setRegion(region);
+}
+```
+
+The method may take the workflow aggregate, a `BpmsStartTrigger` (which kind of start event fired, when, the signal's name, the start event's id) and process variables via `@TaskParam`. Whether your BPMS can serve such a start at all is documented in the [adapter platform's wiki](https://github.com/vanillabp/adapter-platform-integration/wiki/Starting-workflows).
+
 ### Wire up a process
 
 Starting a workflow or correlating a message (explained in the [Advanced topics](#correlate-an-incoming-message) section) are actions originated in our custom business code typically triggered by some kind of business event (e.g. user hits a button). Wiring a process, a task or an expression is about connecting BPMN elements to our software components. In these situations the action to run our business code is initiated by the workflow system. So, we have to introduce markers to let the engine know where to find the right code to run.
