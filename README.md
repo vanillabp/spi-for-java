@@ -376,6 +376,18 @@ In this situation the aggregate must not be persisted before.
 
 Additionally, if there are several receive tasks "waiting" for the same message then you need to define a correlation-id as a third parameter of `correlateMessage`.
 
+### Broadcast a signal
+
+A BPMN signal is a broadcast: every element waiting for it reacts, and processes having a signal start event are started by it. That is why `sendSignal` takes no workflow aggregate - unlike a message, a signal is not addressed to one workflow:
+
+```java
+rideService.sendSignal("DriversStrikeStarted");
+```
+
+Pass the signal name as modelled; VanillaBP applies the name scoping of the workflow module. No payload travels with the signal, for the same reason a message carries none: the workflow aggregate is the single source of truth.
+
+The signal reaches every BPMS the workflow module is deployed to, which keeps a broadcast complete while workflows are being migrated from one BPMS to another. Call it within a transaction: an embedded BPMS broadcasts inside it, and for a remote BPMS the outbox entry carrying the broadcast rides it - so a rollback takes the broadcast with it either way. There is nothing to deduplicate a signal by, so a redelivered entry may broadcast twice; do not build exactly-once expectations on it.
+
 ### Versioning of BPMN business-processes
 
 In case of doing breaking changes in BPMN over the time you can specify for which versions of BPMN this component is developed for:

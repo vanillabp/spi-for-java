@@ -40,6 +40,34 @@ public interface ProcessService<A> {
   }
 
   /**
+   * Broadcasts a BPMN signal.
+   * <p>
+   * A signal is a broadcast by definition: every element waiting for it reacts,
+   * and processes having a signal start event are started. It is therefore NOT
+   * addressed to one workflow - unlike
+   * {@link #correlateMessage(Object, String)}, this method takes no workflow
+   * aggregate, and there is no way to limit a signal to a single workflow (the
+   * BPMS which can do that is the exception, not the rule).
+   * <p>
+   * The signal reaches every BPMS the workflow module is deployed to, which is
+   * what keeps a broadcast complete while workflows are being migrated from one
+   * BPMS to another.
+   * <p>
+   * Pass the signal name as it is modelled; VanillaBP applies whatever name
+   * scoping the workflow module uses.
+   * <p>
+   * No payload travels with the signal: like a message, a signal transports its
+   * name and nothing else - the workflow aggregate is the single source of truth.
+   *
+   * @param signalName The BPMN signal name
+   */
+  default void sendSignal(
+      String signalName) {
+    throw new UnsupportedOperationException(
+        "sendSignal is implemented by a VanillaBP adapter");
+  }
+
+  /**
    * Correlate a message for the workflow-aggregate's workflow or its sub-workflows
    * (call-activities).
    * <p>
