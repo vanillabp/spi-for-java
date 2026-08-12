@@ -49,12 +49,18 @@ public interface ProcessService<A> {
    * aggregate, and there is no way to limit a signal to a single workflow (the
    * BPMS which can do that is the exception, not the rule).
    * <p>
-   * The signal reaches every BPMS the workflow module is deployed to, which is
-   * what keeps a broadcast complete while workflows are being migrated from one
-   * BPMS to another.
+   * <b>The broadcast is scoped to the WORKFLOW MODULE of this service.</b> It
+   * reaches every BPMS the module is deployed to - which is what keeps a broadcast
+   * complete while workflows are being migrated from one BPMS to another - and
+   * every process of the module waiting for that signal. It does NOT reach other
+   * workflow modules: they are separate scopes, isolated by a tenant or by
+   * prefixed identifiers. An application wanting a signal in several modules sends
+   * it through the {@code ProcessService} of each of them; VanillaBP does not
+   * decide that for you, because which modules are meant is a business question.
    * <p>
    * Pass the signal name as it is modelled; VanillaBP applies whatever name
-   * scoping the workflow module uses.
+   * scoping the workflow module uses, and the BPMS is addressed with the tenant
+   * and the client configured for the adapter it belongs to.
    * <p>
    * No payload travels with the signal: like a message, a signal transports its
    * name and nothing else - the workflow aggregate is the single source of truth.
