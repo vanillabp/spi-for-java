@@ -64,6 +64,11 @@ public interface ProcessService<A> {
    * <p>
    * No payload travels with the signal: like a message, a signal transports its
    * name and nothing else - the workflow aggregate is the single source of truth.
+   * <p>
+   * <b>A signal is not buffered.</b> It reaches whoever waits for it at that very
+   * moment; a workflow arriving at its catch event a moment later gets nothing.
+   * Where a delivery has to wait for its recipient, correlate a message to that
+   * workflow instead.
    *
    * @param signalName The BPMN signal name
    */

@@ -390,6 +390,21 @@ The broadcast is scoped to the **workflow module** of the service you called: ac
 
 Within the module the signal reaches every BPMS it is deployed to, which keeps a broadcast complete while workflows are being migrated from one BPMS to another. Call it within a transaction: an embedded BPMS broadcasts inside it, and for a remote BPMS the outbox entry carrying the broadcast rides it - so a rollback takes the broadcast with it either way. There is nothing to deduplicate a signal by, so a redelivered entry may broadcast twice; do not build exactly-once expectations on it.
 
+### Learn that a workflow ended
+
+Annotate a method to be told when a workflow finished, instead of modelling a service task in front of every end event:
+
+```java
+@WorkflowEnded
+public void rideFinished(Ride ride, WorkflowEnd end) {
+     ride.setClosedAt(end.time());
+}
+```
+
+VanillaBP loads the workflow aggregate, calls the method and saves the aggregate. The annotation is optional and a model without it pays nothing: adapters attach their listener only where a method exists.
+
+Two properties worth knowing. The notification is **at-least-once**, so write the method idempotently. And whether it runs in the transaction which ended the workflow depends on the BPMS: an embedded engine ends the workflow and calls the method in one transaction, a remote BPMS delivers the notification afterwards. What a BPMS can report about the KIND of end also differs - see the [adapter platform's wiki](https://github.com/vanillabp/adapter-platform-integration/wiki/Starting-workflows#when-a-workflow-ends).
+
 ### Versioning of BPMN business-processes
 
 In case of doing breaking changes in BPMN over the time you can specify for which versions of BPMN this component is developed for:
