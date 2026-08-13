@@ -40,6 +40,61 @@ public interface ProcessService<A> {
   }
 
   /**
+   * Tells the BPMS that the workflow-aggregate changed, so it sees the current
+   * state before the next thing it evaluates.
+   * <p>
+   * VanillaBP pushes the aggregate at the sync points it knows anyway (starting a
+   * workflow, completing a task, correlating a message). Between them the BPMS
+   * still holds the state of the last push - which matters when a conditional
+   * event waits for exactly this change, or when a gateway is evaluated before the
+   * next task of yours runs.
+   * <p>
+   * WHAT is pushed is not decided here: it is the part of the aggregate shared with
+   * the BPMS ({@link io.vanillabp.spi.service.SyncWithBPMS} /
+   * {@link io.vanillabp.spi.service.NoSyncWithBPMS}). This method names no
+   * variables - the aggregate stays the single source of truth.
+   * <p>
+   * What a BPMS DOES with the new values is its own business: Camunda 7 re-evaluates
+   * the conditions of waiting conditional events, other systems simply hold the
+   * values until something reads them.
+   *
+   * @param workflowAggregate The workflow-aggregate
+   * @return The workflow-aggregate attached to JPA
+   */
+  default A aggregateChanged(
+      A workflowAggregate) {
+    throw new UnsupportedOperationException(
+        "aggregateChanged is implemented by a VanillaBP adapter");
+  }
+
+  /**
+   * Tells the BPMS that the workflow-aggregate changed, pushing the shared values
+   * into the scope of ONE task instead of the workflow's global scope.
+   * <p>
+   * This is what multi-instance needs: every instance of a multi-instance activity
+   * has a scope of its own, and a workflow-wide write would be a lost update
+   * between siblings.
+   * <p>
+   * <b>It does not additionally write the global scope.</b> A value written in a
+   * task's scope shadows the global one there anyway, and writing both would change
+   * what the OTHER instances see - which is the one thing multi-instance code must
+   * not do by accident. The consequence is worth knowing: the workflow-global values
+   * stay as they were, so a gateway AFTER the multi-instance evaluates the older
+   * state unless you call {@link #aggregateChanged(Object)} as well.
+   *
+   * @param workflowAggregate The workflow-aggregate
+   * @param taskId The task-id reported previously
+   * @return The workflow-aggregate attached to JPA
+   * @see TaskId
+   */
+  default A aggregateChanged(
+      A workflowAggregate,
+      String taskId) {
+    throw new UnsupportedOperationException(
+        "aggregateChanged is implemented by a VanillaBP adapter");
+  }
+
+  /**
    * Broadcasts a BPMN signal.
    * <p>
    * A signal is a broadcast by definition: every element waiting for it reacts,

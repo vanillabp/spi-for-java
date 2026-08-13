@@ -390,6 +390,29 @@ The broadcast is scoped to the **workflow module** of the service you called: ac
 
 Within the module the signal reaches every BPMS it is deployed to, which keeps a broadcast complete while workflows are being migrated from one BPMS to another. Call it within a transaction: an embedded BPMS broadcasts inside it, and for a remote BPMS the outbox entry carrying the broadcast rides it - so a rollback takes the broadcast with it either way. There is nothing to deduplicate a signal by, so a redelivered entry may broadcast twice; do not build exactly-once expectations on it.
 
+### Tell the BPMS that the aggregate changed
+
+VanillaBP hands the aggregate's shared state to the BPMS at the moments it talks to it anyway: starting a workflow, finishing a `@WorkflowTask` method, completing or canceling a task, correlating a message. Sometimes a change has to arrive between those moments - a conditional event waits for it, or a gateway is evaluated before your next task runs:
+
+```java
+ride.setDriverArrived(true);
+rideService.aggregateChanged(ride);
+```
+
+WHAT is pushed is not decided here: it stays the part of the aggregate shared with the BPMS (`@SyncWithBPMS`). The call says "look again", nothing more - and the aggregate remains the single source of truth.
+
+The second overload picks the scope:
+
+```java
+rideService.aggregateChanged(ride, taskId);
+```
+
+With a task id the values land in the scope of THAT task instance, which is what multi-instance activities need: every instance has a scope of its own, and a workflow-wide write would be a lost update between siblings. It does **not** additionally write the workflow's global scope - so a gateway after the multi-instance evaluates the older state unless you also push globally. Pass the task id your `@TaskId` parameter was given.
+
+Call it within a transaction, like every operation reaching a BPMS. A workflow which already ended makes the push a warned no-op, a workflow no BPMS knows raises a `WorkflowNotFoundException` - and the aggregate is saved in both cases. Repeating a push is harmless: the values are read when it happens, not when it was scheduled.
+
+What a BPMS does with the new values is its own business - Camunda 7 re-evaluates the conditions of waiting conditional events, others simply hold them until something reads them.
+
 ### Learn that a workflow ended
 
 Annotate a method to be told when a workflow finished, instead of modelling a service task in front of every end event:
