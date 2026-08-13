@@ -40,6 +40,106 @@ public interface ProcessService<A> {
   }
 
   /**
+   * Tells the BPMS that the workflow-aggregate changed, so it sees the current
+   * state before the next thing it evaluates.
+   * <p>
+   * VanillaBP pushes the aggregate at the sync points it knows anyway (starting a
+   * workflow, completing a task, correlating a message). Between them the BPMS
+   * still holds the state of the last push - which matters when a conditional
+   * event waits for exactly this change, or when a gateway is evaluated before the
+   * next task of yours runs.
+   * <p>
+   * WHAT is pushed is not decided here: it is the part of the aggregate shared with
+   * the BPMS ({@link io.vanillabp.spi.service.SyncWithBPMS} /
+   * {@link io.vanillabp.spi.service.NoSyncWithBPMS}). This method names no
+   * variables - the aggregate stays the single source of truth.
+   * <p>
+   * What a BPMS DOES with the new values is its own business: Camunda 7 re-evaluates
+   * the conditions of waiting conditional events, other systems simply hold the
+   * values until something reads them.
+   *
+   * @param workflowAggregate The workflow-aggregate
+   * @return The workflow-aggregate attached to JPA
+   */
+  default A aggregateChanged(
+      A workflowAggregate) {
+    throw new UnsupportedOperationException(
+        "aggregateChanged is implemented by a VanillaBP adapter");
+  }
+
+  /**
+   * Tells the BPMS that the workflow-aggregate changed, pushing the shared values
+   * into the scope the given task RUNS IN instead of the workflow's global scope.
+   * <p>
+   * That scope is the process, an embedded subprocess, or the one iteration of a
+   * multi-instance embedded subprocess the task belongs to - what the rest of that
+   * scope evaluates, and what an event subprocess with a conditional start event
+   * listens on. Deliberately NOT the task's own context: values written there would
+   * serve a boundary event of that task and nothing else, and they disappear with the
+   * task.
+   * <p>
+   * This is what multi-instance work needs: every iteration has a scope of its own,
+   * and a workflow-wide write would be a lost update between the iterations.
+   * <p>
+   * <b>It does not additionally write the global scope.</b> A value written in an
+   * inner scope shadows the global one there anyway, and writing both would change
+   * what the OTHER iterations see - which is the one thing multi-instance code must
+   * not do by accident. The consequence is worth knowing: the workflow-global values
+   * stay as they were, so a gateway AFTER the multi-instance evaluates the older
+   * state unless you call {@link #aggregateChanged(Object)} as well.
+   *
+   * @param workflowAggregate The workflow-aggregate
+   * @param taskId The task-id reported previously
+   * @return The workflow-aggregate attached to JPA
+   * @see TaskId
+   */
+  default A aggregateChanged(
+      A workflowAggregate,
+      String taskId) {
+    throw new UnsupportedOperationException(
+        "aggregateChanged is implemented by a VanillaBP adapter");
+  }
+
+  /**
+   * Broadcasts a BPMN signal.
+   * <p>
+   * A signal is a broadcast by definition: every element waiting for it reacts,
+   * and processes having a signal start event are started. It is therefore NOT
+   * addressed to one workflow - unlike
+   * {@link #correlateMessage(Object, String)}, this method takes no workflow
+   * aggregate, and there is no way to limit a signal to a single workflow (the
+   * BPMS which can do that is the exception, not the rule).
+   * <p>
+   * <b>The broadcast is scoped to the WORKFLOW MODULE of this service.</b> It
+   * reaches every BPMS the module is deployed to - which is what keeps a broadcast
+   * complete while workflows are being migrated from one BPMS to another - and
+   * every process of the module waiting for that signal. It does NOT reach other
+   * workflow modules: they are separate scopes, isolated by a tenant or by
+   * prefixed identifiers. An application wanting a signal in several modules sends
+   * it through the {@code ProcessService} of each of them; VanillaBP does not
+   * decide that for you, because which modules are meant is a business question.
+   * <p>
+   * Pass the signal name as it is modelled; VanillaBP applies whatever name
+   * scoping the workflow module uses, and the BPMS is addressed with the tenant
+   * and the client configured for the adapter it belongs to.
+   * <p>
+   * No payload travels with the signal: like a message, a signal transports its
+   * name and nothing else - the workflow aggregate is the single source of truth.
+   * <p>
+   * <b>A signal is not buffered.</b> It reaches whoever waits for it at that very
+   * moment; a workflow arriving at its catch event a moment later gets nothing.
+   * Where a delivery has to wait for its recipient, correlate a message to that
+   * workflow instead.
+   *
+   * @param signalName The BPMN signal name
+   */
+  default void sendSignal(
+      String signalName) {
+    throw new UnsupportedOperationException(
+        "sendSignal is implemented by a VanillaBP adapter");
+  }
+
+  /**
    * Correlate a message for the workflow-aggregate's workflow or its sub-workflows
    * (call-activities).
    * <p>

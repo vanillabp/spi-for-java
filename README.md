@@ -152,6 +152,30 @@ public void rideBooked(RideRequest request) {
 
 If the process starts with a message start event instead of a plain start event, use `startWorkflowByMessage(aggregate, messageName)` instead.
 
+#### Workflows the BPMS starts
+
+Some processes start without anybody asking: a timer start event fires, a signal start event receives a broadcast, or a conditional start event's condition becomes true. Nobody hands VanillaBP an aggregate then, so VanillaBP builds one: it instantiates the aggregate class (which needs a constructor without arguments), assigns an ID and copies the process variables the model set into attributes of the same name.
+
+Annotate a method of your workflow service if you want a say - to build the aggregate yourself:
+
+```java
+@WorkflowStartedByBpms
+public Settlement buildAggregate(BpmsStartTrigger trigger) {
+     return new Settlement(trigger.time());
+}
+```
+
+or to enrich the one VanillaBP built:
+
+```java
+@WorkflowStartedByBpms(id = "DailySettlementTimer")
+public void enrich(Settlement settlement, @TaskParam("region") String region) {
+     settlement.setRegion(region);
+}
+```
+
+The method may take the workflow aggregate, a `BpmsStartTrigger` (which kind of start event fired, when, the signal's name, the start event's id) and process variables via `@TaskParam`. Whether your BPMS can serve such a start at all is documented in the [adapter platform's wiki](https://github.com/vanillabp/adapter-platform-integration/wiki/Starting-workflows).
+
 ### Wire up a process
 
 Starting a workflow or correlating a message (explained in the [Advanced topics](#correlate-an-incoming-message) section) are actions originated in our custom business code typically triggered by some kind of business event (e.g. user hits a button). Wiring a process, a task or an expression is about connecting BPMN elements to our software components. In these situations the action to run our business code is initiated by the workflow system. So, we have to introduce markers to let the engine know where to find the right code to run.
@@ -352,34 +376,97 @@ In this situation the aggregate must not be persisted before.
 
 Additionally, if there are several receive tasks "waiting" for the same message then you need to define a correlation-id as a third parameter of `correlateMessage`.
 
-### Versioning of BPMN business-processes
+### Broadcast a signal
 
-In case of doing breaking changes in BPMN over the time you can specify for which versions of BPMN this component is developed for:
+A BPMN signal is a broadcast: every element waiting for it reacts, and processes having a signal start event are started by it. That is why `sendSignal` takes no workflow aggregate - unlike a message, a signal is not addressed to one workflow:
 
 ```java
-@Component
-@WorkflowService(
-        workflowAggregateClass = Ride.class,
-        version = "<10"
-    )
-public class TaxiRide {
-  ...
+rideService.sendSignal("DriversStrikeStarted");
+```
+
+Pass the signal name as modelled; VanillaBP applies the name scoping of the workflow module. No payload travels with the signal, for the same reason a message carries none: the workflow aggregate is the single source of truth.
+
+The broadcast is scoped to the **workflow module** of the service you called: across the processes of that module, not across modules, and addressed with the tenant and client of each adapter it is deployed to. Where the module prefixes its identifiers, the signal name is prefixed too. A signal meant for several workflow modules is sent through the `ProcessService` of each of them - which modules are meant is a business decision.
+
+Within the module the signal reaches every BPMS it is deployed to, which keeps a broadcast complete while workflows are being migrated from one BPMS to another. Call it within a transaction: an embedded BPMS broadcasts inside it, and for a remote BPMS the outbox entry carrying the broadcast rides it - so a rollback takes the broadcast with it either way. There is nothing to deduplicate a signal by, so a redelivered entry may broadcast twice; do not build exactly-once expectations on it.
+
+### Tell the BPMS that the aggregate changed
+
+VanillaBP hands the aggregate's shared state to the BPMS at the moments it talks to it anyway: starting a workflow, finishing a `@WorkflowTask` method, completing or canceling a task, correlating a message. Sometimes a change has to arrive between those moments - a conditional event waits for it, or a gateway is evaluated before your next task runs:
+
+```java
+ride.setDriverArrived(true);
+rideService.aggregateChanged(ride);
+```
+
+WHAT is pushed is not decided here: it stays the part of the aggregate shared with the BPMS (`@SyncWithBPMS`). The call says "look again", nothing more - and the aggregate remains the single source of truth.
+
+The second overload picks the scope:
+
+```java
+rideService.aggregateChanged(ride, taskId);
+```
+
+With a task id the values land in the scope that task RUNS in: the process, an embedded subprocess, or the one iteration of a multi-instance embedded subprocess. That is what multi-instance work needs, where every iteration has a scope of its own and a workflow-wide write would be a lost update between them, and it is the scope an event subprocess with a conditional start event listens on. The task's own context is deliberately skipped - values there would serve a boundary event of that task and disappear with it.
+
+It does **not** additionally write the workflow's global scope, so a gateway after the multi-instance evaluates the older state unless you also push globally. Pass the task id your `@TaskId` parameter was given.
+
+Call it within a transaction, like every operation reaching a BPMS. A workflow which already ended makes the push a warned no-op, a workflow no BPMS knows raises a `WorkflowNotFoundException` - and the aggregate is saved in both cases. Repeating a push is harmless: the values are read when it happens, not when it was scheduled.
+
+What a BPMS does with the new values is its own business - Camunda 7 re-evaluates the conditions of waiting conditional events, others simply hold them until something reads them.
+
+### Learn that a workflow ended
+
+Annotate a method to be told when a workflow finished, instead of modelling a service task in front of every end event:
+
+```java
+@WorkflowEnded
+public void rideFinished(Ride ride, WorkflowEnd end) {
+     ride.setClosedAt(end.time());
 }
 ```
 
-Valid formats:
-* missing attribute: all versions
-* '*': all versions
-* '1': only version "1"
-* '1-3': only versions "1", "2" and "3"
-* '<3': only versions "1" and "2"
-* '<=3': only versions "1", "2" and "3"
-* '>3': only versions higher than "3"
-* '>=3': only versions higher than or equal to "3"
+VanillaBP loads the workflow aggregate, calls the method and saves the aggregate. The annotation is optional and a model without it pays nothing: adapters attach their listener only where a method exists.
 
-*Heads up:* VanillaBP 2 evaluates these ranges when it picks the method for a task, but no BPMS adapter reports the
-version of the running process yet — so today a task is matched by the methods whose range covers *all* versions
-(no attribute or `'*'`). Annotate properly to benefit from it as soon as an adapter supplies the version.
+Two properties worth knowing. The notification is **at-least-once**, so write the method idempotently. And whether it runs in the transaction which ended the workflow depends on the BPMS: an embedded engine ends the workflow and calls the method in one transaction, a remote BPMS delivers the notification afterwards. What a BPMS can report about the KIND of end also differs - see the [adapter platform's wiki](https://github.com/vanillabp/adapter-platform-integration/wiki/Starting-workflows#when-a-workflow-ends).
+
+### Versioning of BPMN business-processes
+
+Once a BPMN model changes in a way older workflows cannot follow, you can tell VanillaBP which versions of the
+process a method serves:
+
+```java
+@WorkflowTask(taskDefinition = "chargeCreditCard", version = "<10")
+public void chargeCreditCardUpToTen(
+        final Ride ride) { ... }
+
+@WorkflowTask(taskDefinition = "chargeCreditCard", version = ">=10")
+public void chargeCreditCard(
+        final Ride ride) { ... }
+```
+
+The version meant is the version of the deployed process **definition** as the BPMS counts it (Camunda 7 and
+Camunda 8 count integers upwards per BPMN process id), not a version your application invents. Instead of that
+number a boundary may name a **version tag** given in the model (`camunda:versionTag` in Camunda 7,
+`zeebe:versionTag` in Camunda 8), which is what teams usually put their release name into.
+
+Valid formats:
+* missing attribute or `'*'`: every version
+* `'3'`: only version "3"
+* `'release-2024'`: every version tagged that way
+* `'1-3'` or `'v1.0..v2.0'`: a range, both boundaries included
+* `'<3'` / `'<=3'`, `'>3'` / `'>=3'`: open ended, the boundary excluded respectively included
+
+Ranges accept `..` as well as `-` as their separator; use `..` whenever a boundary is a version tag containing a `-`.
+"Greater" and "less" mean the deployment order, which for a BPMS counting versions upwards is the numeric order.
+
+The same attribute exists on `@WorkflowStartedByBpms` and `@WorkflowEnded` and means the same there.
+
+Two things are worth knowing. Several methods may serve one BPMN element as long as their versions do not overlap;
+overlapping specifications are a mistake VanillaBP reports when the application starts, naming both methods. And a
+BPMS which does not report the version of a process serves every method regardless of this attribute. See the
+[adapter platform's wiki](https://github.com/vanillabp/adapter-platform-integration/wiki/Workflow-tasks#versions-of-a-process)
+for what each BPMS can tell.
 
 ### Call-activities
 

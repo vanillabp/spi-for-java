@@ -5,38 +5,48 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
 import java.lang.annotation.Documented;
 import java.lang.annotation.Inherited;
-import java.lang.annotation.Repeatable;
 import java.lang.annotation.Retention;
 import java.lang.annotation.Target;
 
 /**
- * This annotation is used to define a method for processing a certain
- * process-task (e.g. service-task, send-task, etc.):
- * 
+ * Marks the method to be called once a workflow ended. Without it an application
+ * learns of the end only by modelling a service task in front of every end event -
+ * BPMN noise for a fact the engine knows anyway.
+ *
  * <pre>
- * &#64;WorkflowTask(taskDefinition = "doSomeWorkload")
- * public void doSomeWorkload(final MyWorkflowAggregate aggregate) throws {@link TaskException} {
+ * &#64;WorkflowEnded
+ * public void rideFinished(final Ride ride, final {@link WorkflowEnd} end) {
+ *   ride.setClosedAt(end.time());
+ * }
  * </pre>
+ *
+ * The method may take the workflow aggregate and a {@link WorkflowEnd} in any
+ * order. VanillaBP loads the aggregate, calls the method and saves the aggregate,
+ * so recording the outcome is all the method has to do.
+ * <p>
+ * The annotation is OPTIONAL, and a model without it pays nothing: adapters attach
+ * their listener only where a method exists.
+ * <p>
+ * <b>The notification is at-least-once</b> - after a crash or a retried delivery it
+ * may arrive twice, so write it idempotently (which recording a status is). Whether
+ * it runs in the transaction ending the workflow depends on the BPMS: an embedded
+ * engine ends the workflow and calls the method in ONE transaction, a remote BPMS
+ * delivers the notification afterwards.
  */
 @Retention(RUNTIME)
 @Target(METHOD)
 @Inherited
 @Documented
-@Repeatable(WorkflowTasks.class)
-public @interface WorkflowTask {
+public @interface WorkflowEnded {
 
-  static String USE_METHOD_NAME = "";
-
-  /**
-   * @return The activity's BPMN id. Defaults to the annotated method's name.
-   */
-  String id() default USE_METHOD_NAME;
+  static String ANY_END_EVENT = "";
 
   /**
-   * @return The task-definition as defined in the BPMN. Defaults to the annotated
-   *         method's name.
+   * @return The BPMN id of the end event this method serves. Defaults to every end
+   *         of the workflow, which is what a process ending in one place needs -
+   *         and the only thing a BPMS reporting no element id can serve.
    */
-  String taskDefinition() default USE_METHOD_NAME;
+  String id() default ANY_END_EVENT;
 
   /**
    * Which versions of the deployed BPMN process this method serves. The version is
