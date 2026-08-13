@@ -407,7 +407,9 @@ The second overload picks the scope:
 rideService.aggregateChanged(ride, taskId);
 ```
 
-With a task id the values land in the scope of THAT task instance, which is what multi-instance activities need: every instance has a scope of its own, and a workflow-wide write would be a lost update between siblings. It does **not** additionally write the workflow's global scope - so a gateway after the multi-instance evaluates the older state unless you also push globally. Pass the task id your `@TaskId` parameter was given.
+With a task id the values land in the scope that task RUNS in: the process, an embedded subprocess, or the one iteration of a multi-instance embedded subprocess. That is what multi-instance work needs, where every iteration has a scope of its own and a workflow-wide write would be a lost update between them, and it is the scope an event subprocess with a conditional start event listens on. The task's own context is deliberately skipped - values there would serve a boundary event of that task and disappear with it.
+
+It does **not** additionally write the workflow's global scope, so a gateway after the multi-instance evaluates the older state unless you also push globally. Pass the task id your `@TaskId` parameter was given.
 
 Call it within a transaction, like every operation reaching a BPMS. A workflow which already ended makes the push a warned no-op, a workflow no BPMS knows raises a `WorkflowNotFoundException` - and the aggregate is saved in both cases. Repeating a push is harmless: the values are read when it happens, not when it was scheduled.
 

@@ -69,15 +69,21 @@ public interface ProcessService<A> {
 
   /**
    * Tells the BPMS that the workflow-aggregate changed, pushing the shared values
-   * into the scope of ONE task instead of the workflow's global scope.
+   * into the scope the given task RUNS IN instead of the workflow's global scope.
    * <p>
-   * This is what multi-instance needs: every instance of a multi-instance activity
-   * has a scope of its own, and a workflow-wide write would be a lost update
-   * between siblings.
+   * That scope is the process, an embedded subprocess, or the one iteration of a
+   * multi-instance embedded subprocess the task belongs to - what the rest of that
+   * scope evaluates, and what an event subprocess with a conditional start event
+   * listens on. Deliberately NOT the task's own context: values written there would
+   * serve a boundary event of that task and nothing else, and they disappear with the
+   * task.
    * <p>
-   * <b>It does not additionally write the global scope.</b> A value written in a
-   * task's scope shadows the global one there anyway, and writing both would change
-   * what the OTHER instances see - which is the one thing multi-instance code must
+   * This is what multi-instance work needs: every iteration has a scope of its own,
+   * and a workflow-wide write would be a lost update between the iterations.
+   * <p>
+   * <b>It does not additionally write the global scope.</b> A value written in an
+   * inner scope shadows the global one there anyway, and writing both would change
+   * what the OTHER iterations see - which is the one thing multi-instance code must
    * not do by accident. The consequence is worth knowing: the workflow-global values
    * stay as they were, so a gateway AFTER the multi-instance evaluates the older
    * state unless you call {@link #aggregateChanged(Object)} as well.
