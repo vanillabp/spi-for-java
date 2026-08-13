@@ -49,19 +49,33 @@ public @interface WorkflowEnded {
   String id() default ANY_END_EVENT;
 
   /**
-   * Can be used to define certain versions or ranges of versions of a process for
-   * which the annotated method should be used for.
+   * Which versions of the deployed BPMN process this method serves. The version is
+   * the version of the process DEFINITION as the BPMS counts it (Camunda 7 and
+   * Camunda 8 count integers upwards per BPMN process id), not a version the
+   * application invents.
    * <p>
-   * Format:
+   * A boundary is either such a version or a version TAG given in the model
+   * (<code>camunda:versionTag</code> in Camunda 7, <code>zeebe:versionTag</code> in
+   * Camunda 8):
    * <ul>
-   * <li><i>*</i>: all versions
-   * <li><i>1</i>: only version &quot;1&quot;
-   * <li><i>1-3</i>: only versions &quot;1&quot;, &quot;2&quot; and &quot;3&quot;
-   * <li><i>&gt;3</i>: only versions higher than &quot;3&quot;
-   * <li><i>&lt;3</i>: only versions less than &quot;3&quot;</li>
+   * <li><i>*</i>: every version (the default)
+   * <li><i>3</i> or <i>release-2024</i>: exactly that version, respectively every
+   * version carrying that tag
+   * <li><i>1-3</i> or <i>v1.0..v2.0</i>: a range, both boundaries included
+   * <li><i>&gt;3</i>, <i>&lt;v2.0</i>: open ended</li>
    * </ul>
+   * Ranges accept <code>..</code> as well as <code>-</code> as their separator; a
+   * boundary naming a tag which contains a <code>-</code> has to use <code>..</code>.
+   * &quot;Greater&quot; and &quot;less&quot; mean the deployment order, which for a
+   * BPMS counting versions upwards is the numeric order.
+   * <p>
+   * Several methods may serve one BPMN element as long as their versions do not
+   * overlap - overlapping specifications are reported when the application starts.
+   * A BPMS which does not report the version of a process serves every method
+   * regardless of this attribute, and specifications naming a version tag need a
+   * BPMS which can be asked about its tags (Camunda 8 needs its query API for that).
    *
-   * @return The version of the process this method belongs to.
+   * @return The versions of the deployed BPMN process this method serves.
    */
   String[] version() default "*";
 

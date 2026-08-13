@@ -432,32 +432,41 @@ Two properties worth knowing. The notification is **at-least-once**, so write th
 
 ### Versioning of BPMN business-processes
 
-In case of doing breaking changes in BPMN over the time you can specify for which versions of BPMN this component is developed for:
+Once a BPMN model changes in a way older workflows cannot follow, you can tell VanillaBP which versions of the
+process a method serves:
 
 ```java
-@Component
-@WorkflowService(
-        workflowAggregateClass = Ride.class,
-        version = "<10"
-    )
-public class TaxiRide {
-  ...
-}
+@WorkflowTask(taskDefinition = "chargeCreditCard", version = "<10")
+public void chargeCreditCardUpToTen(
+        final Ride ride) { ... }
+
+@WorkflowTask(taskDefinition = "chargeCreditCard", version = ">=10")
+public void chargeCreditCard(
+        final Ride ride) { ... }
 ```
 
-Valid formats:
-* missing attribute: all versions
-* '*': all versions
-* '1': only version "1"
-* '1-3': only versions "1", "2" and "3"
-* '<3': only versions "1" and "2"
-* '<=3': only versions "1", "2" and "3"
-* '>3': only versions higher than "3"
-* '>=3': only versions higher than or equal to "3"
+The version meant is the version of the deployed process **definition** as the BPMS counts it (Camunda 7 and
+Camunda 8 count integers upwards per BPMN process id), not a version your application invents. Instead of that
+number a boundary may name a **version tag** given in the model (`camunda:versionTag` in Camunda 7,
+`zeebe:versionTag` in Camunda 8), which is what teams usually put their release name into.
 
-*Heads up:* VanillaBP 2 evaluates these ranges when it picks the method for a task, but no BPMS adapter reports the
-version of the running process yet — so today a task is matched by the methods whose range covers *all* versions
-(no attribute or `'*'`). Annotate properly to benefit from it as soon as an adapter supplies the version.
+Valid formats:
+* missing attribute or `'*'`: every version
+* `'3'`: only version "3"
+* `'release-2024'`: every version tagged that way
+* `'1-3'` or `'v1.0..v2.0'`: a range, both boundaries included
+* `'<3'` / `'<=3'`, `'>3'` / `'>=3'`: open ended, the boundary excluded respectively included
+
+Ranges accept `..` as well as `-` as their separator; use `..` whenever a boundary is a version tag containing a `-`.
+"Greater" and "less" mean the deployment order, which for a BPMS counting versions upwards is the numeric order.
+
+The same attribute exists on `@WorkflowStartedByBpms` and `@WorkflowEnded` and means the same there.
+
+Two things are worth knowing. Several methods may serve one BPMN element as long as their versions do not overlap;
+overlapping specifications are a mistake VanillaBP reports when the application starts, naming both methods. And a
+BPMS which does not report the version of a process serves every method regardless of this attribute. See the
+[adapter platform's wiki](https://github.com/vanillabp/adapter-platform-integration/wiki/Workflow-tasks#versions-of-a-process)
+for what each BPMS can tell.
 
 ### Call-activities
 
