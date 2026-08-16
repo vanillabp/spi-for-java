@@ -482,34 +482,34 @@ There are two different situations in which you might want to split up the BPMN 
 
 In this situation the workflow-aggregate entity created for the root workflow is also used for the workflows spawned by call-activities. The reason for this is, that one still could put the content of the call-activities BPMN into to parent BPMN (e.g. as an embedded subprocess).
 
-As each call-activity's process is a section of fulfillment one may introduce a separate service bean bound to the same workflow-aggregate class:
+Both processes belong to the same workflow-aggregate, and the aggregate has exactly one `ProcessService` (that is what `ProcessService<Ride>` injects). The called process is therefore declared as a *secondary* process of the service bean which declares the process to be started:
 
 ```java
 @Component
 @WorkflowService(
         workflowAggregateClass = Ride.class,
-        bpmnProcess = @BpmnProcess(bpmnProcessId = "DetermineDriver"))
-public class DetermineDriver {
-  ...
-}
-```
-
-*Hint:* In this example the attribute `bpmnProcess` could be removed since the BPMN process-id is the same as the service's class-name ("convention over configuration").
-
-But one can also decide to reuse the existing service-bean for the call-activity's process by simply adding another `@BpmnProcess` annotation:
-
-```java
-@Component
-@WorkflowService(
-        workflowAggregateClass = Ride.class,
-        bpmProcess = @BpmnProcess(bpmnProcessId = "TaxiRide"),
+        bpmnProcess = @BpmnProcess(bpmnProcessId = "TaxiRide"),
         secondaryBpmnProcesses = @BpmnProcess(bpmnProcessId = "DetermineDriver"))
 public class TaxiRide {
   ...
 }
 ```
 
-*Hint:* In this example the attribute `bpmnProcess` of the first `@BpmnProcess` annotation could be removed since the BPMN process-id is the same as the service's class-name ("convention over configuration").
+*Hint:* In this example the attribute `bpmnProcess` could be removed since the BPMN process-id is the same as the service's class-name ("convention over configuration").
+
+The handlers of the called process may live in a service bean of their own, as long as that bean declares the same `bpmnProcess`:
+
+```java
+@Component
+@WorkflowService(
+        workflowAggregateClass = Ride.class,
+        bpmnProcess = @BpmnProcess(bpmnProcessId = "TaxiRide"))
+public class DetermineDriver {
+  ...
+}
+```
+
+What does **not** work is two service beans of one workflow-aggregate declaring different processes as their `bpmnProcess`: `startWorkflow` starts one process, and which one that is must not depend on the order classes are found in. VanillaBP reports that while the application starts (Quarkus: while it is built), naming both classes and both processes.
 
 #### 1. Reuse - a call-activity is used to reuse a section of a process by other processes, too
 
