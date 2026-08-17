@@ -58,7 +58,7 @@ jobs:
 
       - name: Set Maven release version
         run: |
-          mvn --batch-mode versions:set -DnewVersion=${{ github.event.inputs.release_version }}
+          mvn --batch-mode --update-snapshots versions:set -DnewVersion=${{ github.event.inputs.release_version }}
           find . -name pom.xml.versionsBackup -delete
 
       - name: Check for SNAPSHOT dependencies
@@ -76,7 +76,7 @@ jobs:
 
       - name: Build & deploy to Maven Central
         run: |
-          mvn --batch-mode -DskipTests -DskipITs -Dgpg.passphrase=$GPG_PASSPHRASE \
+          mvn --batch-mode --update-snapshots -DskipTests -DskipITs -Dgpg.passphrase=$GPG_PASSPHRASE \
           clean deploy -P release,central-portal
         env:
           GPG_PASSPHRASE: ${{ secrets.MAVEN_GPG_PASSPHRASE }}
@@ -115,9 +115,9 @@ jobs:
 
       - name: Set next snapshot version
         run: |
-          mvn --batch-mode versions:set -DnewVersion=${{ env.NEXT_SNAPSHOT }}
+          mvn --batch-mode --update-snapshots versions:set -DnewVersion=${{ env.NEXT_SNAPSHOT }}
           find . -name pom.xml.versionsBackup -delete
-          mvn --batch-mode -DskipTests -DskipITs package
+          mvn --batch-mode --update-snapshots -DskipTests -DskipITs package
 
       - name: Commit next snapshot version
         run: |  
