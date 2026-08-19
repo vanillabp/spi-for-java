@@ -1,0 +1,12 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": ["github>vanillabp/renovate-config"],
+  "timezone": "Europe/Vienna",
+  "packageRules": [
+    {
+      "description": "VanillaBP artifacts follow the framework, not Renovate: their versions are bumped when a release is cut, and while they are snapshots there is nothing to look up.",
+      "matchPackageNames": ["/^io\\.vanillabp/"],
+      "enabled": false
+    }
+  ]
+}
