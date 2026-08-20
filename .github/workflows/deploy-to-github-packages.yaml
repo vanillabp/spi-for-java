@@ -1,14 +1,25 @@
 name: Publish to GitHub Packages
+# A pull request builds and tests, a push to main publishes. Both run as the job
+# 'publish', so a pull request Renovate opens gets a result like every other one - it did
+# not while this workflow only listened to pushes and ignored renovate/**.
+#
+# Publishing from main alone is the second half of it: GitHub Packages holds one
+# 1.1.1-SNAPSHOT per module, so every branch used to overwrite what main published, and a
+# consumer could resolve a set of modules which never existed in any single tree.
 "on":
+  pull_request:
   push:
-    branches-ignore:
-      - renovate/**
-      - release/**
-      - feature/wip-**
+    branches:
+      - main
 permissions:
   contents: read
   pages: write
   id-token: write
+concurrency:
+  # two pushes to main must not publish at the same time, and the later one has to finish
+  # rather than be cancelled: it carries the newer artifacts
+  group: publish-${{ github.ref }}
+  cancel-in-progress: false
 jobs:
   publish:
     runs-on: ubuntu-latest
@@ -22,7 +33,14 @@ jobs:
           java-version: 21
           distribution: temurin
           cache: maven
+      - name: Build and test
+        if: "${{ github.event_name == 'pull_request' }}"
+        run: mvn --batch-mode --update-snapshots install verify
+        env:
+          GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
+          CI: false
       - name: Publish package
+        if: "${{ github.event_name == 'push' }}"
         run: mvn --batch-mode --update-snapshots deploy
         env:
           GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
