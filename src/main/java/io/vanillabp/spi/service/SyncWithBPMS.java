@@ -28,14 +28,17 @@ import java.lang.annotation.Target;
  * <b>Inheritance:</b> an attribute which is annotated neither way inherits the
  * behavior of its owner - the aggregate class, respectively the attribute it
  * belongs to (nested objects and collection elements included). The outermost
- * default is the BPMS ADAPTER's: an embedded engine reading the aggregate live
- * (Camunda 7) shares nothing unless asked to, a remote engine (Camunda 8,
- * Process-Engine-API) shares everything - see your adapter's documentation.
+ * default belongs to the BPMS adapter, and every VanillaBP adapter shares
+ * everything: an aggregate carrying no annotation at all reaches its model
+ * completely, on an embedded engine as well as on a remote one. A model may
+ * therefore read the same attributes wherever it runs, which is the reason the
+ * default is not the adapter's taste.
  * <p>
- * <b>What sharing means</b> is the adapter's decision, too: a remote BPMS pushes
- * the values as process variables whenever VanillaBP talks to it on behalf of the
- * workflow, whereas an embedded engine reads the aggregate directly and writes the
- * values only as context information for operators.
+ * <b>What sharing means</b> is the same everywhere, too: the values are written as
+ * process variables whenever VanillaBP talks to the BPMS on behalf of the workflow,
+ * and the BPMS evaluates its models against those variables. An embedded engine
+ * could reach into the application instead, and Camunda 7 did until it turned out
+ * that a model written that way breaks on every remote BPMS.
  *
  * @see NoSyncWithBPMS
  */
