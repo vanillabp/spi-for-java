@@ -14,7 +14,8 @@ public interface ProcessService<A> {
    * Start a new workflow.
    *
    * @param workflowAggregate The workflow-aggregate
-   * @return The workflow-aggregate attached to JPA
+   * @return The persisted workflow-aggregate, attached where the persistence layer
+   *         works that way (e.g. JPA)
    */
   A startWorkflow(
       A workflowAggregate);
@@ -30,7 +31,8 @@ public interface ProcessService<A> {
    *
    * @param workflowAggregate The workflow-aggregate
    * @param messageName The message name
-   * @return The workflow-aggregate attached to JPA
+   * @return The persisted workflow-aggregate, attached where the persistence layer
+   *         works that way (e.g. JPA)
    */
   default A startWorkflowByMessage(
       A workflowAggregate,
@@ -59,7 +61,8 @@ public interface ProcessService<A> {
    * values until something reads them.
    *
    * @param workflowAggregate The workflow-aggregate
-   * @return The workflow-aggregate attached to JPA
+   * @return The persisted workflow-aggregate, attached where the persistence layer
+   *         works that way (e.g. JPA)
    */
   default A aggregateChanged(
       A workflowAggregate) {
@@ -90,7 +93,8 @@ public interface ProcessService<A> {
    *
    * @param workflowAggregate The workflow-aggregate
    * @param taskId The task-id reported previously
-   * @return The workflow-aggregate attached to JPA
+   * @return The persisted workflow-aggregate, attached where the persistence layer
+   *         works that way (e.g. JPA)
    * @see TaskId
    */
   default A aggregateChanged(
@@ -113,11 +117,17 @@ public interface ProcessService<A> {
    * <b>The broadcast is scoped to the WORKFLOW MODULE of this service.</b> It
    * reaches every BPMS the module is deployed to - which is what keeps a broadcast
    * complete while workflows are being migrated from one BPMS to another - and
-   * every process of the module waiting for that signal. It does NOT reach other
-   * workflow modules: they are separate scopes, isolated by a tenant or by
-   * prefixed identifiers. An application wanting a signal in several modules sends
-   * it through the {@code ProcessService} of each of them; VanillaBP does not
-   * decide that for you, because which modules are meant is a business question.
+   * every process of the module waiting for that signal. An application wanting a
+   * signal in several modules sends it through the {@code ProcessService} of each of
+   * them; VanillaBP does not decide that for you, because which modules are meant is
+   * a business question.
+   * <p>
+   * How far the signal stays inside that module is what the module's
+   * name-clash-avoidance mode decides. A tenant or a prefixed signal name keeps it
+   * there; the mode {@code none} scopes nothing, so the signal reaches every
+   * subscription of that BPMS carrying the same name, whichever module it belongs to.
+   * That is the price of the mode rather than a property of signals, and the reason
+   * VanillaBP asks for a decision at startup where a module runs unscoped.
    * <p>
    * Pass the signal name as it is modelled; VanillaBP applies whatever name
    * scoping the workflow module uses, and the BPMS is addressed with the tenant
@@ -151,7 +161,8 @@ public interface ProcessService<A> {
    *
    * @param workflowAggregate The workflow-aggregate
    * @param messageName  The message name to be correlated
-   * @return The workflow-aggregate attached to JPA
+   * @return The persisted workflow-aggregate, attached where the persistence layer
+   *         works that way (e.g. JPA)
    */
   A correlateMessage(
       A workflowAggregate,
@@ -170,7 +181,8 @@ public interface ProcessService<A> {
    * @param workflowAggregate  The workflow-aggregate
    * @param messageName   The message name to be correlated
    * @param correlationId The correlation-id
-   * @return The workflow-aggregate attached to JPA
+   * @return The persisted workflow-aggregate, attached where the persistence layer
+   *         works that way (e.g. JPA)
    */
   A correlateMessage(
       A workflowAggregate,
@@ -182,7 +194,8 @@ public interface ProcessService<A> {
    *
    * @param workflowAggregate The workflow-aggregate
    * @param taskId       The task-id reported previously
-   * @return The workflow-aggregate attached to JPA
+   * @return The persisted workflow-aggregate, attached where the persistence layer
+   *         works that way (e.g. JPA)
    * @see TaskId
    */
   A completeUserTask(
@@ -196,7 +209,8 @@ public interface ProcessService<A> {
    * @param taskId        The task-id reported previously
    * @param bpmnErrorCode The error code which can be caught in BPMN by error
    *                      boundary events
-   * @return The workflow-aggregate attached to JPA
+   * @return The persisted workflow-aggregate, attached where the persistence layer
+   *         works that way (e.g. JPA)
    * @see TaskId
    */
   A cancelUserTask(
@@ -209,7 +223,8 @@ public interface ProcessService<A> {
    *
    * @param workflowAggregate The workflow-aggregate
    * @param taskId            The task-id reported previously
-   * @return The workflow-aggregate attached to JPA
+   * @return The persisted workflow-aggregate, attached where the persistence layer
+   *         works that way (e.g. JPA)
    * @see TaskId
    */
   A completeTask(
@@ -223,7 +238,8 @@ public interface ProcessService<A> {
    * @param taskId        The task-id reported previously
    * @param bpmnErrorCode The error code which can be caught in BPMN by error
    *                      boundary events
-   * @return The workflow-aggregate attached to JPA
+   * @return The persisted workflow-aggregate, attached where the persistence layer
+   *         works that way (e.g. JPA)
    * @see TaskId
    */
   A cancelTask(
