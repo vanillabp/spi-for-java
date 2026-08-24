@@ -36,7 +36,7 @@ jobs:
       # 'install' and not 'install verify': install already runs every phase verify
       # has, so naming both made Maven walk two lifecycles per module. The tests
       # skipped their second run, the compiler did not, and every javac warning was
-      # reported twice - once per compilation (story 111).
+      # reported twice - once per compilation.
       - name: Build and test
         if: "${{ github.event_name == 'pull_request' }}"
         run: mvn --batch-mode --update-snapshots install
