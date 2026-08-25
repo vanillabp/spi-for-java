@@ -26,6 +26,9 @@ import java.lang.annotation.Target;
  * <b>Inheritance:</b> like {@link SyncWithBPMS} the annotation applies to the
  * annotated element AND everything below it (a nested object's attributes, a
  * collection's elements) until an inner element says otherwise.
+ * <p>
+ * Why what a BPMS gets to see is declared rather than derived is decision 3 in the repository's
+ * DECISIONS.md.
  *
  * @see SyncWithBPMS
  */

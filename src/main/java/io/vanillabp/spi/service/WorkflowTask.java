@@ -17,6 +17,9 @@ import java.lang.annotation.Target;
  * &#64;WorkflowTask(taskDefinition = "doSomeWorkload")
  * public void doSomeWorkload(final MyWorkflowAggregate aggregate) throws {@link TaskException} {
  * </pre>
+ * <p>
+ * What the version range names, and why a delivery without a reported version is served only by a
+ * method without one, is decision 5 in the repository's DECISIONS.md.
  */
 @Retention(RUNTIME)
 @Target(METHOD)

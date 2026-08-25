@@ -42,6 +42,8 @@ import java.lang.annotation.Target;
  * transaction VanillaBP opened for the start; the aggregate is saved afterwards.
  * Throwing means the workflow does not start: the aggregate is rolled back and the
  * BPMS applies its retry semantics.
+ * <p>
+ * What the version range names is decision 5 in the repository's DECISIONS.md.
  */
 @Retention(RUNTIME)
 @Target(METHOD)

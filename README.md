@@ -880,6 +880,15 @@ A domain aggregate is used as a persistent entity to store data either required 
 
 If particular attributes are required often (e.g. nearly every task) then this aggregate can be used as a *cache* of the original source of data. Depending on the use-case one might has to implement a proper update strategy.
 
+## Decision log
+
+Decisions several places in this repository rely on live in [`DECISIONS.md`](./DECISIONS.md), the
+one thing the code is allowed to cite. A citation reads `see decision 2 in the repository's
+DECISIONS.md`, numbers are never reused, and an overturned entry stays and names its successor, so
+a citation written today still resolves in a year. The entries are the promises this API makes to
+an application: where the state of a workflow lives, what addresses it, what the BPMS gets to see,
+and what an exception out of a handler means.
+
 ## Noteworthy & Contributors
 
 VanillaBP was developed by [Phactum](https://www.phactum.at) with the intention of giving back to the community as it has benefited the community in the past.

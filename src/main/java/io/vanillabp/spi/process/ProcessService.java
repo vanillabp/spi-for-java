@@ -6,6 +6,12 @@ import java.util.List;
 import io.vanillabp.spi.service.TaskId;
 
 /**
+ * <p>
+ * Two promises of this interface are written down where several places rely on them: a workflow is
+ * addressed by the id attribute of its aggregate rather than by a technical key (decision 2 in the
+ * repository's DECISIONS.md), and a broadcast signal reaches the workflow module of THIS service
+ * and no other (decision 6 in the repository's DECISIONS.md).
+ *
  * @param <A> The workflow-aggregate-class
  */
 public interface ProcessService<A> {
