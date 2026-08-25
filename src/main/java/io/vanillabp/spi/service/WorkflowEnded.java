@@ -32,6 +32,8 @@ import java.lang.annotation.Target;
  * it runs in the transaction ending the workflow depends on the BPMS: an embedded
  * engine ends the workflow and calls the method in ONE transaction, a remote BPMS
  * delivers the notification afterwards.
+ * <p>
+ * What the version range names is decision 5 in the repository's DECISIONS.md.
  */
 @Retention(RUNTIME)
 @Target(METHOD)

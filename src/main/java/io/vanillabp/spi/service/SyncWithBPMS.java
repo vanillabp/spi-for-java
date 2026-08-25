@@ -39,6 +39,9 @@ import java.lang.annotation.Target;
  * and the BPMS evaluates its models against those variables. An embedded engine
  * could reach into the application instead, and Camunda 7 did until it turned out
  * that a model written that way breaks on every remote BPMS.
+ * <p>
+ * Why what a BPMS gets to see is declared rather than derived, and what that has to do with running
+ * the same model on another BPMS, is decision 3 in the repository's DECISIONS.md.
  *
  * @see NoSyncWithBPMS
  */

@@ -31,6 +31,9 @@ import io.vanillabp.spi.process.ProcessService;
  * {@link ProcessService#cancelUserTask(Object, String, String)} for user-tasks
  * or {@link ProcessService#completeTask(Object, String)} or
  * {@link ProcessService#cancelTask(Object, String, String)} for workflow-tasks.
+ * <p>
+ * Why this one parameter is what makes a task asynchronous, and why a contradiction with the model
+ * is reported while the application boots, is decision 7 in the repository's DECISIONS.md.
  */
 @Retention(RUNTIME)
 @Target(ElementType.PARAMETER)

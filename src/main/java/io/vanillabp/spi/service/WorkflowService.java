@@ -10,6 +10,9 @@ import java.lang.annotation.Target;
 
 /**
  * Used to wire workflow-services to the processes they are responsible for.
+ * <p>
+ * Where the state of a workflow lives, and why that is the aggregate rather than a process
+ * variable, is decision 1 in the repository's DECISIONS.md.
  */
 @Retention(RUNTIME)
 @Target(TYPE)
