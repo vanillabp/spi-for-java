@@ -48,12 +48,7 @@ Every example on this page is about approving a loan: a customer asks for an amo
 
 This is a section of a loan approval workflow and should give you an idea of how the Vanilla BP SPI is used in your business code:
 
-> **Screenshot to be added:** `readme/example.png` - the section of the process `loan_approval` cut
-> from the blueprint [`bpmn-multi-instance-task`](https://github.com/vanillabp-blueprints/bpmn-multi-instance-task-springboot),
-> showing the start event "Loan requested", the service task "Retrieve credit rating" and the
-> multi-instance service task "Request partner offer" with its parallel marker.
-
-*Screenshot of [Camunda Modeler](https://camunda.com/en/download/modeler/)*
+![Example model](./readme/example.png)
 
 ```java
 @Component
@@ -206,9 +201,7 @@ Starting a workflow or correlating a message (explained in the [Advanced topics]
 
 We introduce a name based approach for the binding in an aspect-oriented style. As a basis for this binding the BPMN process-id is used:
 
-> **Screenshot to be added:** `readme/process_propertiespanel.png` - the property panel of the
-> Camunda Modeler for the process `loan_approval`, showing the field "Process id" holding
-> `loan_approval`.
+![BPMN Process ID](./readme/process_propertiespanel.png)
 
 *Screenshot of [Camunda Modeler](https://camunda.com/en/download/modeler/)*
 
@@ -249,9 +242,7 @@ If the service-bean becomes huge due to the number of tasks of the workflow then
 
 Similar to [wiring a process](#wire-up-a-process) an aspect-oriented approach is used for the task binding. This applies to service tasks, send tasks, business rule tasks and user tasks.
 
-> **Screenshot to be added:** `readme/task_propertiespanel.png` - the property panel of the Camunda
-> Modeler for the service task "Retrieve credit rating" of the process `loan_approval`, showing the
-> task definition `retrieveCreditRating`.
+![Task definition](./readme/task_propertiespanel.png)
 
 *Screenshot of [Camunda Modeler](https://camunda.com/en/download/modeler/)*
 
@@ -368,20 +359,13 @@ There are two major situations in which expressions are used:
 
 1. A path decision has to be taken (exclusive gateway, inclusive gateway, conditional flows)
 
-   > **Screenshot to be added:** `readme/expression_propertiespanel.png` - the property panel of the
-   > Camunda Modeler for the sequence flow "good enough" leaving the exclusive gateway "How does the
-   >
-   >> rating look?" in the blueprint [`bpmn-gateways`](https://github.com/vanillabp-blueprints/bpmn-gateways-springboot),
-   >> showing the condition expression `${ratedAcceptable}`.
+   ![Sequence flow condition](./readme/expression_propertiespanel.png)
 
    *Screenshot of [Camunda Modeler](https://camunda.com/en/download/modeler/)*
 
 2. A value needs to be calculated (e.g. x business-days as a timer-event definition)
 
-   > **Screenshot to be added:** `readme/timer_propertiespanel.png` - the property panel of the
-   > Camunda Modeler for the timer intermediate catch event "Cool-off period" of the blueprint
-   > [`bpmn-timer`](https://github.com/vanillabp-blueprints/bpmn-timer-springboot), showing a timer
-   > definition of type duration holding the expression `${coolOffPeriod}`.
+   ![Timer expression](./readme/timer_propertiespanel.png)
 
    *Screenshot of [Camunda Modeler](https://camunda.com/en/download/modeler/)*
 
@@ -419,10 +403,7 @@ Letting the model ask a question (`ratedAcceptable`) instead of comparing number
 
 If you are familiar with any workflow system then you might know about process-variables you can use to store information the workflow needs to fulfill decisions like at sequence-flow conditions. As shown in upper sections the Vanilla BP SPI has no process-variables in its API and makes the workflow system [use the workflow-aggregate instead](#wire-up-an-expression):
 
-> **Screenshot to be added:** `readme/expression_propertiespanel.png` - the same property panel as
-> above: the sequence flow "good enough" of the blueprint `bpmn-gateways` with the condition
-> expression `${ratedAcceptable}`, which is an attribute of the workflow-aggregate and not a process
-> variable anybody assigned.
+![Expression](./readme/expression_propertiespanel.png)
 
 *Screenshot of [Camunda Modeler](https://camunda.com/en/download/modeler/)*
 
@@ -618,10 +599,7 @@ There are two different situations in which you might want to split up the BPMN 
 
 #### 1. Decomposition - a call-activity is used to hide complexity
 
-> **Screenshot to be added:** `readme/callactivity_propertiespanel.png` - the property panel of the
-> Camunda Modeler for the call activity "Assess risk" of the process `loan_approval` in the blueprint
-> [`bpmn-call-activity-decomposition`](https://github.com/vanillabp-blueprints/bpmn-call-activity-decomposition-springboot),
-> showing the called element `risk_assessment`.
+![Call-Activity](./readme/callactivity_propertiespanel.png)
 
 *Screenshot of [Camunda Modeler](https://camunda.com/en/download/modeler/)*
 
@@ -668,21 +646,13 @@ public class ChargeAccount {
 }
 ```
 
-> **Screenshot to be added:** `readme/call-activity.png` - a section of a process in the Camunda
-> Modeler showing the reuse variant: a service task "Charge account" next to a collapsed pool
-> "Charge account", with a message flow between them, so the reused process is a participant of its
-> own rather than a call activity.
+![Reuse as a participant](./readme/call-activity.png)
 
 *Screenshot of [Camunda Modeler](https://camunda.com/en/download/modeler/)*
 
 ### Multi-instance
 
-> **Screenshot to be added:** `readme/multi-instance.png` - the multi-instance service task "Request
->
->> partner offer" of the process `loan_approval` in the blueprint
->> [`bpmn-multi-instance-task`](https://github.com/vanillabp-blueprints/bpmn-multi-instance-task-springboot),
->> its property panel showing the parallel multi-instance loop characteristics with the collection
->> `${partnerIds}` and the element variable `partnerId`.
+![Multi-Instance](./readme/multi-instance.png)
 
 *Screenshot of [Camunda Modeler](https://camunda.com/en/download/modeler/)*
 
@@ -822,11 +792,7 @@ That single parameter is what makes the task asynchronous: the method returning 
 
 According to the life-cycle of asynchronous tasks there are two situations in which one might to get informed by the engine:
 
-> **Screenshot to be added:** `readme/user-task.png` - the life cycle of an asynchronous task as a
-> diagram: the BPMS creates the task and calls the workflow-method with the event `CREATED`, the
-> application answers later with `completeTask`/`completeUserTask` or `cancelTask`/`cancelUserTask`,
-> and a task taken away by an interrupting boundary event, by the end of the workflow or by the
-> application itself calls the workflow-method again with the event `CANCELED`.
+![UserTask lifecycle](./readme/user-task.png)
 
 A `@TaskEvent` annotated parameter can be used to mark a method to be called in one or in both situations. Depending on whether a `@TaskEvent` annotated parameter is given and [it's value](./src/main/java/io/vanillabp/spi/service/TaskEvent.java), the workflow-method is called on each event:
 
@@ -1048,8 +1014,6 @@ or the main process. The blueprint [`bpmn-history-and-diagram`](https://github.c
 serves all three methods over HTTP.
 
 ## About the SPI
-
-VanillaBP was developed as part of the [Taxi Ride Blueprint](https://github.com/phactum/taxiride-blueprint), a demo of how to implement Java based business processing software using state-of-the-art techniques. The SPI is what stayed when the demo had made its point; the examples on this page moved on to the loan approval the [blueprints](https://github.com/vanillabp-blueprints) model.
 
 ### Prerequisites
 
