@@ -2,11 +2,11 @@
 
 *Vanilla BP* is **an aspect orientated service provider interface (SPI) for workflow systems as a Java developer would expect it to be**.
 
-The SPI was developed as part of the [Taxi Ride Blueprint](https://github.com/phactum/taxiride-blueprint) which is a demo of how to implement Java based business processing software using state-of-the-art techniques. Therefore, examples shown in this README are about building a taxi ride business process implementation.
+Every example on this page is about approving a loan: a customer asks for an amount, a credit rating is retrieved, partners are asked for an offer and the request is decided. That is the same business case the [VanillaBP blueprints](https://github.com/vanillabp-blueprints) implement, so a link followed from here lands in a model you have already read about. The blueprints name their beans after the role they play (`Workflow`, `WorkflowTaskHandler`, `Service`), because each of them holds exactly one workflow; on this page the classes are named after the business case (`LoanApproval`, `LoanApprovalService`), because the examples stand next to each other without that context. The process id, the message names, the task names and the attributes of the workflow-aggregate are literally the same in both places.
 
 *Heads up:* If you want to learn about the things we had in mind creating this SPI then don't miss to also read the [About the SPI](#about-the-spi) section afterwards :wink:. It also includes links to [available adapters](#available-adapters) to use this SPI with an existing workflow system.
 
-*This README documents the SPI itself.* How you set it up in an application — workflow modules, aggregate persistence, configuration, and the platform you run on (Spring Boot, Quarkus) — is documented in the [VanillaBP wiki](https://github.com/vanillabp/adapter-platform-integration/wiki), which also links to each BPMS adapter's own wiki.
+*This README documents the SPI itself.* How you set it up in an application, meaning workflow modules, aggregate persistence, configuration, and the platform you run on (Spring Boot, Quarkus), is documented in the [VanillaBP wiki](https://github.com/vanillabp/adapter-platform-integration/wiki), which also links to each BPMS adapter's own wiki.
 
 ## Content
 
@@ -18,106 +18,116 @@ The SPI was developed as part of the [Taxi Ride Blueprint](https://github.com/ph
    4. [Wire up a task](#wire-up-a-task)
    5. [Wire up an expression](#wire-up-an-expression)
 3. [Advanced topics](#advanced-topics)
-   1. [Natural ids](#natural-ids)
-   2. [Process variables](#process-variables)
-   3. [Correlate an incoming message](#correlate-an-incoming-message)
-   4. [Versioning of BPMN business-processes](#versioning-of-bpmn-business-processes)
-   5. [Call-activities](#call-activities)
-   6. [Multi-instance](#multi-instance)
-   7. [User tasks and asynchronous tasks](#user-tasks-and-asynchronous-tasks)
-   8. [Viewing BPMN and execution history of workflows](#viewing-bpmn-and-execution-history-of-workflows)
-4. [About the SPI](#about-the-spi)
+   1. [Process variables](#process-variables)
+   2. [What the BPMS gets to see](#what-the-bpms-gets-to-see)
+   3. [Natural ids](#natural-ids)
+   4. [Correlate an incoming message](#correlate-an-incoming-message)
+   5. [Broadcast a signal](#broadcast-a-signal)
+   6. [Tell the BPMS that the aggregate changed](#tell-the-bpms-that-the-aggregate-changed)
+   7. [Learn that a workflow ended](#learn-that-a-workflow-ended)
+   8. [Versioning of BPMN business-processes](#versioning-of-bpmn-business-processes)
+   9. [Call-activities](#call-activities)
+   10. [Multi-instance](#multi-instance)
+   11. [User tasks and asynchronous tasks](#user-tasks-and-asynchronous-tasks)
+   12. [The workflow module a service belongs to](#the-workflow-module-a-service-belongs-to)
+   13. [What the API throws](#what-the-api-throws)
+4. [Viewing BPMN and execution history of workflows](#viewing-bpmn-and-execution-history-of-workflows)
+   1. [Showing the BPMN of a simple workflow](#showing-the-bpmn-of-a-simple-workflow)
+   2. [Showing the BPMN of a complex workflow](#showing-the-bpmn-of-a-complex-workflow)
+5. [About the SPI](#about-the-spi)
    1. [Prerequisites](#prerequisites)
    2. [Motivation](#motivation)
    3. [Goals](#goals)
    4. [Available Adapters](#available-adapters)
    5. [Concept](#concept)
-5. [Noteworthy & Contributors](#noteworthy--contributors)
-6. [License](#license)
+6. [Decision log](#decision-log)
+7. [Noteworthy & Contributors](#noteworthy--contributors)
+8. [License](#license)
 
 ## How it looks like
 
-This is a section of a taxi ride workflow and should give you an idea of how the Vanilla BP SPI is used in your business code:
+This is a section of a loan approval workflow and should give you an idea of how the Vanilla BP SPI is used in your business code:
 
-![Section of a taxi ride workflow](./readme/example.png)
-
-*Screenshot of [Camunda Modeler](https://camunda.com/en/download/modeler/)*
+![Example model](./readme/example.png)
 
 ```java
-@Service
-@WorkflowService(workflowAggregateClass = Ride.class)
-@Transactional(noRollbackFor = TaskException.class)
-public class TaxiRide {
-    
+@Component
+@WorkflowService(
+        workflowAggregateClass = LoanApproval.class,
+        bpmnProcess = @BpmnProcess(bpmnProcessId = "loan_approval"))
+public class LoanApprovalService {
+
     @Autowired
-    private ProcessService<Ride> processService;
-    
-    public String rideBooked(
-            final Location pickupLocation,
-            final OffsetDateTime pickupTime,
-            final Location targetLocation) {
-        
-        final var ride = new Ride();
+    private ProcessService<LoanApproval> processService;
+
+    @Autowired
+    private CreditRatingClient creditRatings;
+
+    @Autowired
+    private PartnerClient partners;
+
+    @Transactional
+    public String loanRequested(
+            final String loanRequestId,
+            final int amount) {
+
+        final var loanApproval = new LoanApproval(loanRequestId, amount);
         ...
-        // start the workflow by the message start event
         return processService
-                .startWorkflowByMessage(ride, "RideBooked")
-                .getRideId();
-    }
-    
-    @WorkflowTask
-    public void determinePotentialDrivers(
-            final Ride ride) {
-        
-        final var parameters = new DriversNearbyParameters()
-                .longitude(ride.getPickupLocation().getLongitude())
-                .latitude(ride.getPickupLocation().getLatitude());
-
-        final var potentialDrivers = driverService
-                .determineDriversNearby(parameters);
-
-        ride.setPotentialDrivers(
-                mapper.toDomain(potentialDrivers, ride));
+                .startWorkflow(loanApproval)
+                .getLoanRequestId();
     }
 
     @WorkflowTask
-    public void requestRideOfferFromDriver(
-            final Ride ride,
-            @MultiInstanceIndex("RequestRideOffer")
-            final int potentialDriverIndex) {
-        
-        final var driver = ride.getPotentialDrivers().get(potentialDriverIndex);
-        
-        driverService.requestRideOffer(
-                driver.getId(),
-                new RequestRideOfferParameters()
-                        .rideId(ride.getRideId())
-                        .pickupLocation(mapper.toApi(ride.getPickupLocation()))
-                        .pickupTime(ride.getPickupTime())
-                        .targetLocation(mapper.toApi(ride.getTargetLocation())));
-        
+    public void retrieveCreditRating(
+            final LoanApproval loanApproval) {
+
+        if (loanApproval.getCreditRating() != null) {
+            return; // a BPMS may deliver a task twice
+        }
+
+        loanApproval.setCreditRating(
+                creditRatings.rate(
+                        loanApproval.getLoanRequestId(),
+                        loanApproval.getAmount()));
+    }
+
+    @WorkflowTask
+    public void requestPartnerOffer(
+            final LoanApproval loanApproval,
+            @MultiInstanceElement("ServiceTask_RequestPartnerOffer")
+            final String partnerId) {
+
+        partners.requestOffer(
+                partnerId,
+                loanApproval.getLoanRequestId(),
+                loanApproval.getAmount());
     }
     ...
 ```
+
+The `@Transactional` sits on the method calling `ProcessService`, and on no other method of the class. Starting a workflow needs a transaction of yours, a task method must not have one: VanillaBP runs a task method in a transaction it owns and commits that transaction when a [`TaskException`](#wire-up-a-task) passes it, which an application transaction joining in would turn into a rollback. The application does not boot if a transaction annotation covers a `@WorkflowTask` method, and the message names the method.
+
+The first thing `retrieveCreditRating` does is to check whether there is a rating already. A remote BPMS may deliver the same task more than once, so a task method is written to be repeatable, keyed on the state of the aggregate.
 
 ## Usage
 
 ### Process-specific workflow-aggregate
 
-Typically, you have data needed to fulfill the purpose of the workflow. This might be values like customer ID, order ID or in case of the taxi ride the pickup time, the pickup location and the target location:
+Typically, you have data needed to fulfill the purpose of the workflow. This might be values like customer ID, order ID or in case of the loan approval the requested amount and the credit rating retrieved for it:
 
 ```java
 @Entity
-@Table(name = "RIDES")
+@Table(name = "LOAN_APPROVAL")
 @Getter
 @Setter
-public class Ride {
+public class LoanApproval {
   @Id
-  private String rideId; // see section "Natural ids"
-  private OffsetDateTime pickupTime;
-  private String pickupLocation;
-  private String targetLocation;
-  private boolean customerCharged;
+  private String loanRequestId; // see section "Natural ids"
+  private Integer amount;
+  private Integer creditRating;
+  private String ratingBand;
+  private String outcome;
 }
 ```
 
@@ -136,21 +146,30 @@ There is a ready-to-use service bean available called `ProcessService`. It is a 
 
 ```java
 @Autowired
-private ProcessService<Ride> rideService;
+private ProcessService<LoanApproval> processService;
 ```
 
-To start a workflow we can use it as part of a typical bean method which my be called due to a business event (e.g. user hits a button):
+To start a workflow we can use it as part of a typical bean method which may be called due to a business event (e.g. user hits a button):
 
 ```java
-public void rideBooked(RideRequest request) {
+@Transactional
+public void loanRequested(LoanRequest request) {
      // use the request to initialize the aggregate
-     var ride = new Ride(request);
+     var loanApproval = new LoanApproval(request);
      // start the process
-     rideService.startWorkflow(ride);
+     processService.startWorkflow(loanApproval);
 }
 ```
 
-If the process starts with a message start event instead of a plain start event, use `startWorkflowByMessage(aggregate, messageName)` instead.
+The aggregate is persisted and the workflow is started within the transaction of the caller, so a workflow without its aggregate cannot happen. What comes back is the persisted aggregate, attached where the persistence layer works that way (e.g. JPA).
+
+If the process starts with a message start event instead of a plain start event, use `startWorkflowByMessage(aggregate, messageName)` instead:
+
+```java
+processService.startWorkflowByMessage(loanApproval, "LoanRequested");
+```
+
+Only the *name* of the message reaches the BPMS. Whatever the message carried belongs on the aggregate before the call, which is the same rule as for [correlating a message](#correlate-an-incoming-message).
 
 #### Workflows the BPMS starts
 
@@ -160,21 +179,21 @@ Annotate a method of your workflow service if you want a say - to build the aggr
 
 ```java
 @WorkflowStartedByBpms
-public Settlement buildAggregate(BpmsStartTrigger trigger) {
-     return new Settlement(trigger.time());
+public NightlyReview buildAggregate(BpmsStartTrigger trigger) {
+     return new NightlyReview(trigger.time());
 }
 ```
 
 or to enrich the one VanillaBP built:
 
 ```java
-@WorkflowStartedByBpms(id = "DailySettlementTimer")
-public void enrich(Settlement settlement, @TaskParam("region") String region) {
-     settlement.setRegion(region);
+@WorkflowStartedByBpms(id = "StartEvent_ScheduledReview")
+public void enrich(NightlyReview review, @TaskParam("region") String region) {
+     review.setRegion(region);
 }
 ```
 
-The method may take the workflow aggregate, a `BpmsStartTrigger` (which kind of start event fired, when, the signal's name, the start event's id) and process variables via `@TaskParam`. Whether your BPMS can serve such a start at all is documented in the [adapter platform's wiki](https://github.com/vanillabp/adapter-platform-integration/wiki/Starting-workflows).
+The method may take the workflow aggregate, a `BpmsStartTrigger` and process variables via `@TaskParam`, in any order. The trigger says which kind of start event fired (`TIMER`, `SIGNAL` or `CONDITIONAL`), when it fired, the name of the signal where it was one, and the BPMN id of the start event. A message start event is not among the kinds, because that one is triggered by the application through `startWorkflowByMessage`, which carries the aggregate. Whether your BPMS can serve such a start at all is documented in the [adapter platform's wiki](https://github.com/vanillabp/adapter-platform-integration/wiki/Starting-workflows). The blueprint [`bpmn-bpms-initiated-start`](https://github.com/vanillabp-blueprints/bpmn-bpms-initiated-start-springboot) runs it.
 
 ### Wire up a process
 
@@ -182,7 +201,7 @@ Starting a workflow or correlating a message (explained in the [Advanced topics]
 
 We introduce a name based approach for the binding in an aspect-oriented style. As a basis for this binding the BPMN process-id is used:
 
-![](./readme/process_propertiespanel.png)
+![BPMN Process ID](./readme/process_propertiespanel.png)
 
 *Screenshot of [Camunda Modeler](https://camunda.com/en/download/modeler/)*
 
@@ -194,13 +213,13 @@ Use the service's class-name as the process BPMN's process-id to wire up the com
 
 ```java
 @Component
-@WorkflowService(workflowAggregateClass = Ride.class)
-public class TaxiRide {
+@WorkflowService(workflowAggregateClass = LoanApproval.class)
+public class LoanApprovalService {
   ...
 }
 ```
 
-The mandatory annotation attribute `workflowAggregateClass` references the class used as workflow-aggregate of this workflow.
+The BPMN then carries `LoanApprovalService` as its process-id, and nothing else has to be said. The mandatory annotation attribute `workflowAggregateClass` references the class used as workflow-aggregate of this workflow.
 
 #### BPMN-first approach
 
@@ -209,10 +228,10 @@ In case of a given BPMN file the component needs to be mapped by setting the `bp
 ```java
 @Component
 @WorkflowService(
-        workflowAggregateClass = Ride.class,
-        bpmProcess = @BpmnProcess(bpmnProcessId = "Process_TaxiRide")
+        workflowAggregateClass = LoanApproval.class,
+        bpmnProcess = @BpmnProcess(bpmnProcessId = "loan_approval")
     )
-public class TaxiRide {
+public class LoanApprovalService {
   ...
 }
 ```
@@ -223,7 +242,7 @@ If the service-bean becomes huge due to the number of tasks of the workflow then
 
 Similar to [wiring a process](#wire-up-a-process) an aspect-oriented approach is used for the task binding. This applies to service tasks, send tasks, business rule tasks and user tasks.
 
-![](./readme/task_propertiespanel.png)
+![Task definition](./readme/task_propertiespanel.png)
 
 *Screenshot of [Camunda Modeler](https://camunda.com/en/download/modeler/)*
 
@@ -231,18 +250,18 @@ The `@WorkflowTask` annotation is used to mark a method responsible for certain 
 
 ```java
 @WorkflowTask
-public void selectDriverAccordingToScore(Ride ride) {
+public void retrieveCreditRating(LoanApproval loanApproval) {
   ...
 }
 ```
 
 #### Software-first approach
 
-In this situation for the name of the BPMN task definition the name of the method has to be used (e.g. `selectDriverAccordingToScore`) as shown in the screenshot above:
+In this situation for the name of the BPMN task definition the name of the method has to be used (e.g. `retrieveCreditRating`) as shown in the screenshot above:
 
 ```java
 @WorkflowTask
-public void selectDriverAccordingToScore(Ride ride) {
+public void retrieveCreditRating(LoanApproval loanApproval) {
   ...
 }
 ```
@@ -252,8 +271,8 @@ public void selectDriverAccordingToScore(Ride ride) {
 If the BPMN is given, then the name used in the BPMN can be mapped by the annotation attribute `taskDefinition` if it does not match the method's name:
 
 ```java
-@WorkflowTask(taskDefinition = "SELECT_DRIVER")
-public void selectDriverAccordingToScore(Ride ride) {
+@WorkflowTask(taskDefinition = "RETRIEVE_CREDIT_RATING")
+public void retrieveCreditRating(LoanApproval loanApproval) {
   ...
 }
 ```
@@ -261,8 +280,18 @@ public void selectDriverAccordingToScore(Ride ride) {
 as an alternative the task can be wired by the task's BPMN id:
 
 ```java
-@WorkflowTask(id = "Activity_SelectDriver")
-public void selectDriverAccordingToScore(Ride ride) {
+@WorkflowTask(id = "ServiceTask_RetrieveCreditRating")
+public void retrieveCreditRating(LoanApproval loanApproval) {
+  ...
+}
+```
+
+One method may serve several BPMN elements: the annotation is repeatable, and the container `@WorkflowTasks` is what the compiler builds out of it.
+
+```java
+@WorkflowTask(taskDefinition = "retrieveCreditRating")
+@WorkflowTask(taskDefinition = "refreshCreditRating")
+public void retrieveCreditRating(LoanApproval loanApproval) {
   ...
 }
 ```
@@ -271,58 +300,110 @@ public void selectDriverAccordingToScore(Ride ride) {
 
 ```java
 @WorkflowTask
-public void selectDriverAccordingToScore(Ride ride) {
+public void retrieveCreditRating(LoanApproval loanApproval) {
   ...
 }
 ```
 
 As mentioned in section [Process-specific workflow-aggregate](#process-specific-workflow-aggregate) for each workflow an entity-record is used as a workflow-aggregate. So, whenever a service-method is called there is one parameter accepted: The workflow-aggregate providing values of the current workflow.
 
-*Hint:* These workflow task methods do not return any value because they operate on the given data from the workflow-aggregate and also store new data in the workflow-aggregate if necessary. So, just change the field values of the aggregate as the [BPMS-specific adapter](../adapters/README.md#engine-adapters) used will take care of persisting these changed values.
+*Hint:* These workflow task methods do not return any value because they operate on the given data from the workflow-aggregate and also store new data in the workflow-aggregate if necessary. So, just change the field values of the aggregate as the [BPMS-specific adapter](#available-adapters) used will take care of persisting these changed values.
+
+#### Values the model maps into the task
+
+A BPMN task may carry an input mapping, which is how a model hands a task something the aggregate does not hold. Such a value is picked up by a parameter annotated with `@TaskParam`:
+
+```java
+@WorkflowTask
+public void retrieveCreditRating(
+        LoanApproval loanApproval,
+        @TaskParam("ratingProvider") String provider) {
+  ...
+}
+```
+
+This is the one direction in which a value travels *into* your code without passing the aggregate. It is a value of the model, so the model may point the task at another rating provider without the code being touched.
+
+#### The transaction is VanillaBP's
+
+VanillaBP loads the aggregate, calls the method and saves the aggregate, all in one transaction it owns. Do not declare a transaction of your own on a workflow service class or on a `@WorkflowTask` method: it would join VanillaBP's transaction and mark it rollback-only as soon as a `TaskException` passes it, which discards everything the method wrote although the workflow takes the BPMN error path. VanillaBP does not let that happen unnoticed and refuses to boot, naming the method. Methods calling `ProcessService` do need their own transaction, so annotate those instead of the whole class.
+
+#### What a task method may throw
+
+A task method has two ways to end badly, and the BPMN reacts to each of them differently.
+
+```java
+@WorkflowTask
+public void retrieveCreditRating(LoanApproval loanApproval) {
+
+    // the rating provider is down: a technical failure
+    final var rating = creditRatings.rate(loanApproval.getLoanRequestId());
+
+    loanApproval.setCreditRating(rating);
+
+    if (rating < MINIMUM_RATING) {
+        loanApproval.setRejectionReason("rating " + rating + " is too low");
+        // a business outcome the model has an error boundary event for
+        throw new TaskException("loan-rejected");
+    }
+}
+```
+
+A `TaskException` is not a failure. It names a BPMN error code, the workflow leaves the task through the matching error boundary event, and everything the method wrote onto the aggregate **is committed** on the way out, including the rejection reason above. Where a model tells the error name and the error code apart, the second constructor takes both (`new TaskException("Loan rejected", "loan-rejected")`), and the two are readable as `getErrorName()` and `getErrorCode()`. Every other exception is a technical failure: nothing is committed and the BPMS applies its retry semantics. Which of the two happened is a decision the model and the method make together, which is why the transaction has to stay VanillaBP's.
+
+The blueprint [`bpmn-service-task`](https://github.com/vanillabp-blueprints/bpmn-service-task-springboot) plays all three outcomes through, and [`bpmn-error-escalation`](https://github.com/vanillabp-blueprints/bpmn-error-escalation-springboot) shows what a model does with the error afterwards.
 
 ### Wire up an expression
 
 There are two major situations in which expressions are used:
 
-1. A path decision has to be taken (exclusive gateway, inclusive gateway, conditional flows) ![](./readme/expression_propertiespanel.png)  
+1. A path decision has to be taken (exclusive gateway, inclusive gateway, conditional flows)
+
+   ![Sequence flow condition](./readme/expression_propertiespanel.png)
+
    *Screenshot of [Camunda Modeler](https://camunda.com/en/download/modeler/)*
 
-2. A value needs to be calculated (e.g. x business-days as a timer-event definition) ![](./readme/timer_propertiespanel.png)  
+2. A value needs to be calculated (e.g. x business-days as a timer-event definition)
+
+   ![Timer expression](./readme/timer_propertiespanel.png)
+
    *Screenshot of [Camunda Modeler](https://camunda.com/en/download/modeler/)*
 
-The expression specified in the BPMN will be used to retrieve the value from the workflow-aggregate by using a getter or, if there is not getter, by accessing the named field. In case of the getter the result can also be computed on-the-fly:
+The expression specified in the BPMN will be used to retrieve the value from the workflow-aggregate by using a getter or, if there is no getter, by accessing the named field. In case of the getter the result can also be computed on-the-fly:
 
 ```java
 @Entity
-@Table(name = "RIDES")
-public class Ride {
+@Table(name = "LOAN_APPROVAL")
+public class LoanApproval {
     ...
-    private boolean customerCharged;
+    private String ratingBand;
     ...
-    public boolean isCustomerCharged() {
-       return customerCharged;
+    public boolean isRatedAcceptable() {
+       return "acceptable".equals(ratingBand);
     }
     ...
-    public String getDurationOfTwoBusinessDays() {
+    public String getCoolOffPeriod() {
         var holidays = HolidayManager.getInstance(HolidayCalendar.AUSTRIA);
         var nextBusinessDay = Instant.now();
-        while (holidays.isHoliday(nextBusinessDay) {
-            nextBusinessDay = nextBusinessDay.plus(1, ChronoUnits.DAYS);
+        while (holidays.isHoliday(nextBusinessDay)) {
+            nextBusinessDay = nextBusinessDay.plus(1, ChronoUnit.DAYS);
         }
-        return Duration.between(Instant.now, nextBusinessDay).toString();
+        return Duration.between(Instant.now(), nextBusinessDay).toString();
     }
 }
 ```
 
-*Hint:* Each [BPMS-specific adapter](../adapters/README.md#engine-adapters) implements this *magic* to redirect attribute references in BPMN expressions to the proper getter of your workflow-aggregate.
+Letting the model ask a question (`ratedAcceptable`) instead of comparing numbers itself is worth the getter. The data behind the answer stays free to change, so `ratingBand` can become an enum or three columns later without the BPMN or a running workflow noticing.
+
+*Hint:* Each [BPMS-specific adapter](#available-adapters) implements this *magic* to redirect attribute references in BPMN expressions to the proper getter of your workflow-aggregate. Which values reach the BPMS at all is the subject of [What the BPMS gets to see](#what-the-bpms-gets-to-see).
 
 ## Advanced topics
 
 ### Process variables
 
-If you are familiar with any workflow system then you might know about process-variables you can use to store information the workflow needs to fulfill decisions like at sequence-flow conditions. As shown in upper sections the Vanilla BP SPI does not use process-variables but makes the workflow system [use the workflow-aggregate instead](#wire-up-an-expression):
+If you are familiar with any workflow system then you might know about process-variables you can use to store information the workflow needs to fulfill decisions like at sequence-flow conditions. As shown in upper sections the Vanilla BP SPI has no process-variables in its API and makes the workflow system [use the workflow-aggregate instead](#wire-up-an-expression):
 
-![Camunda Modeler](./readme/expression_propertiespanel.png)
+![Expression](./readme/expression_propertiespanel.png)
 
 *Screenshot of [Camunda Modeler](https://camunda.com/en/download/modeler/)*
 
@@ -339,13 +420,47 @@ Reasons for not using process-variables:
    3. For call-activities, *all* process-variables are copied as a default, even including the temporary and unused variables mentioned above.
    4. Schema evolution: Process variables may have complex types and evolve over time. Migrating such values is a hard job.
 
+Under the hood a BPMS still needs the values its models read, and VanillaBP writes them as process variables whenever it talks to the BPMS on behalf of the workflow. Which values those are is [declared on the aggregate](#what-the-bpms-gets-to-see), and no application code ever names one.
+
+### What the BPMS gets to see
+
+An aggregate holds what the business case needs. A BPMS needs the part of it the model reads, and `@SyncWithBPMS` and `@NoSyncWithBPMS` are how you say which part that is. Both work on the aggregate class, on an attribute and on a getter, and the more specific declaration wins:
+
+```java
+@Entity
+@Table(name = "LOAN_APPROVAL")
+@NoSyncWithBPMS                    // nothing is shared by default ...
+public class LoanApproval {
+
+    @Id
+    private String loanRequestId;  // ... except the id, which VanillaBP always shares
+
+    private String customerName;
+
+    private Integer creditRating;
+
+    @SyncWithBPMS                  // ... and the question the model asks
+    public boolean isRatedAcceptable() {
+        return creditRating != null && creditRating >= MINIMUM_RATING;
+    }
+}
+```
+
+An attribute annotated neither way inherits the behavior of its owner, which is the aggregate class or the attribute it belongs to, nested objects and collection elements included. The outermost default belongs to the BPMS adapter, and every VanillaBP adapter shares everything: an aggregate carrying no annotation at all reaches its model completely, on an embedded engine as well as on a remote one. A model may therefore read the same attributes wherever it runs.
+
+Declaring it anyway is what keeps a model portable: an engine running embedded could read the aggregate live instead, and an application relying on that takes the wrong branch on every remote BPMS, silently. It also keeps the payload honest, because the customer's name has no reason to leave the application if no condition reads it.
+
+The blueprint [`bpmn-aggregate-decoupling`](https://github.com/vanillabp-blueprints/bpmn-aggregate-decoupling-springboot) is built around this pair.
+
 ### Natural ids
 
 The aggregate uses a natural id as a primary key, so for one specific natural key a particular process started twice is identified as a duplicate and rejected.
 
-A natural id is a primary key which uniquely identifies a single business-case. That might be an order-id, a trouble-ticket-id or or a checksum calculated based on the use-case's attributes.
+A natural id is a primary key which uniquely identifies a single business-case. That might be an order-id, a trouble-ticket-id or a checksum calculated based on the use-case's attributes.
 
 This natural id has to be chosen wisely, because it is used to identify duplicate requests, which might occur in a distributed, fault-tolerant system. It is also fine to use an auto-increment/UUID but in this case de-duplication will not work.
+
+The id is also what addresses the workflow in every later call: there is no technical workflow id in this API. That is why the value has to exist before the workflow starts and has to stay stable afterwards. A key the persistence hands out on flush is fine, a value the business edits later is not, because the BPMS remembers the one it was given.
 
 ### Correlate an incoming message
 
@@ -359,52 +474,59 @@ One can use the `ProcessService` to perform that message correlation:
 
 ```java
     @Autowired
-    private RideRepositories rides;
+    private LoanApprovalRepository loanApprovals;
 
     @Autowired
-    private RideService<Ride> rideService;
-    
-    public void confirmRide(RideConfirmation message) {
-         var ride = rides.get(message.getRideId());
-         ride.setDriver(message.getDriverId());
-         rideService.correlateMessage(ride, "RideConfirmation");
+    private ProcessService<LoanApproval> processService;
+
+    @Transactional
+    public void contractSigned(ContractSigned message) {
+         var loanApproval = loanApprovals.findById(message.getLoanRequestId()).orElseThrow();
+         loanApproval.setSignedAt(message.getSignedAt());
+         processService.correlateMessage(loanApproval, "ContractSigned");
     }
 ```
+
+VanillaBP finds the workflow by the aggregate's id, so no correlation key is modelled and none is passed. If no configured BPMS knows the workflow, a `WorkflowNotFoundException` says so rather than losing the message silently.
 
 *Hint:* To start a new workflow by a message start event use `startWorkflowByMessage` instead.
 In this situation the aggregate must not be persisted before.
 
 Additionally, if there are several receive tasks "waiting" for the same message then you need to define a correlation-id as a third parameter of `correlateMessage`.
 
+The blueprints [`bpmn-message-correlation`](https://github.com/vanillabp-blueprints/bpmn-message-correlation-springboot) and [`bpmn-message-start`](https://github.com/vanillabp-blueprints/bpmn-message-start-springboot) show both halves.
+
 ### Broadcast a signal
 
 A BPMN signal is a broadcast: every element waiting for it reacts, and processes having a signal start event are started by it. That is why `sendSignal` takes no workflow aggregate - unlike a message, a signal is not addressed to one workflow:
 
 ```java
-rideService.sendSignal("DriversStrikeStarted");
+processService.sendSignal("InterestRatePublished");
 ```
 
-Pass the signal name as modelled; VanillaBP applies the name scoping of the workflow module. No payload travels with the signal, for the same reason a message carries none: the workflow aggregate is the single source of truth.
+Pass the signal name as modelled; VanillaBP applies the name scoping of the workflow module. No payload travels with the signal, for the same reason a message carries none: the workflow aggregate is the single source of truth. Whatever the receiving workflows need has to be readable from the application's own data by the time they wake up.
 
 The broadcast is scoped to the **workflow module** of the service you called: across the processes of that module, not across modules, and addressed with the tenant and client of each adapter it is deployed to. Where the module prefixes its identifiers, the signal name is prefixed too. A signal meant for several workflow modules is sent through the `ProcessService` of each of them - which modules are meant is a business decision.
 
-Within the module the signal reaches every BPMS it is deployed to, which keeps a broadcast complete while workflows are being migrated from one BPMS to another. Call it within a transaction: an embedded BPMS broadcasts inside it, and for a remote BPMS the outbox entry carrying the broadcast rides it - so a rollback takes the broadcast with it either way. There is nothing to deduplicate a signal by, so a redelivered entry may broadcast twice; do not build exactly-once expectations on it.
+Within the module the signal reaches every BPMS it is deployed to, which keeps a broadcast complete while workflows are being migrated from one BPMS to another. Call it within a transaction: an embedded BPMS broadcasts inside it, and for a remote BPMS the outbox entry carrying the broadcast travels with it - so a rollback takes the broadcast with it either way. There is nothing to deduplicate a signal by, so a redelivered entry may broadcast twice; do not build exactly-once expectations on it.
+
+A signal is not buffered either. It reaches whoever waits for it at that very moment, and a workflow arriving at its catch event a moment later gets nothing. Where a delivery has to wait for its recipient, correlate a message to that workflow instead. The blueprint [`bpmn-signals`](https://github.com/vanillabp-blueprints/bpmn-signals-springboot) runs a broadcast against several waiting workflows.
 
 ### Tell the BPMS that the aggregate changed
 
 VanillaBP hands the aggregate's shared state to the BPMS at the moments it talks to it anyway: starting a workflow, finishing a `@WorkflowTask` method, completing or canceling a task, correlating a message. Sometimes a change has to arrive between those moments - a conditional event waits for it, or a gateway is evaluated before your next task runs:
 
 ```java
-ride.setDriverArrived(true);
-rideService.aggregateChanged(ride);
+loanApproval.setCollateralConfirmed(true);
+processService.aggregateChanged(loanApproval);
 ```
 
-WHAT is pushed is not decided here: it stays the part of the aggregate shared with the BPMS (`@SyncWithBPMS`). The call says "look again", nothing more - and the aggregate remains the single source of truth.
+WHAT is pushed is not decided here: it stays the part of the aggregate shared with the BPMS ([`@SyncWithBPMS`](#what-the-bpms-gets-to-see)). The call says "look again", nothing more - and the aggregate remains the single source of truth.
 
 The second overload picks the scope:
 
 ```java
-rideService.aggregateChanged(ride, taskId);
+processService.aggregateChanged(loanApproval, taskId);
 ```
 
 With a task id the values land in the scope that task RUNS in: the process, an embedded subprocess, or the one iteration of a multi-instance embedded subprocess. That is what multi-instance work needs, where every iteration has a scope of its own and a workflow-wide write would be a lost update between them, and it is the scope an event subprocess with a conditional start event listens on. The task's own context is deliberately skipped - values there would serve a boundary event of that task and disappear with it.
@@ -421,14 +543,14 @@ Annotate a method to be told when a workflow finished, instead of modelling a se
 
 ```java
 @WorkflowEnded
-public void rideFinished(Ride ride, WorkflowEnd end) {
-     ride.setClosedAt(end.time());
+public void loanApprovalEnded(LoanApproval loanApproval, WorkflowEnd end) {
+     loanApproval.setClosedAt(end.time());
 }
 ```
 
-VanillaBP loads the workflow aggregate, calls the method and saves the aggregate. The annotation is optional and a model without it pays nothing: adapters attach their listener only where a method exists.
+VanillaBP loads the workflow aggregate, calls the method and saves the aggregate. The annotation is optional and a model without it pays nothing: adapters attach their listener only where a method exists. The method may take the aggregate and a `WorkflowEnd` in any order, and `WorkflowEnd` says when the workflow ended, which end event it reached where the BPMS reports one, and whether it `COMPLETED` or was `TERMINATED` without reaching an end event. An adapter whose BPMS cannot tell the two apart reports `COMPLETED` and says so in its documentation, because a faked distinction would be worse than none.
 
-Two properties worth knowing. The notification is **at-least-once**, so write the method idempotently. And whether it runs in the transaction which ended the workflow depends on the BPMS: an embedded engine ends the workflow and calls the method in one transaction, a remote BPMS delivers the notification afterwards. What a BPMS can report about the KIND of end also differs - see the [adapter platform's wiki](https://github.com/vanillabp/adapter-platform-integration/wiki/Starting-workflows#when-a-workflow-ends).
+Two properties worth knowing. The notification is **at-least-once**, so write the method idempotently. And whether it runs in the transaction which ended the workflow depends on the BPMS: an embedded engine ends the workflow and calls the method in one transaction, a remote BPMS delivers the notification afterwards. What a BPMS can report about the KIND of end also differs - see the [adapter platform's wiki](https://github.com/vanillabp/adapter-platform-integration/wiki/Starting-workflows#when-a-workflow-ends) and the blueprint [`bpmn-workflow-ended`](https://github.com/vanillabp-blueprints/bpmn-workflow-ended-springboot).
 
 ### Versioning of BPMN business-processes
 
@@ -436,13 +558,13 @@ Once a BPMN model changes in a way older workflows cannot follow, you can tell V
 process a method serves:
 
 ```java
-@WorkflowTask(taskDefinition = "chargeCreditCard", version = "<10")
-public void chargeCreditCardUpToTen(
-        final Ride ride) { ... }
+@WorkflowTask(taskDefinition = "assessRisk", version = "1")
+public void assessRiskManually(
+        final LoanApproval loanApproval) { ... }
 
-@WorkflowTask(taskDefinition = "chargeCreditCard", version = ">=10")
-public void chargeCreditCard(
-        final Ride ride) { ... }
+@WorkflowTask(taskDefinition = "assessRisk", version = ">1")
+public void assessRiskAutomatically(
+        final LoanApproval loanApproval) { ... }
 ```
 
 The version meant is the version of the deployed process **definition** as the BPMS counts it (Camunda 7 and
@@ -464,9 +586,10 @@ The same attribute exists on `@WorkflowStartedByBpms` and `@WorkflowEnded` and m
 
 Two things are worth knowing. Several methods may serve one BPMN element as long as their versions do not overlap;
 overlapping specifications are a mistake VanillaBP reports when the application starts, naming both methods. And a
-BPMS which does not report the version of a process serves every method regardless of this attribute. See the
+BPMS which does not report the version of a process serves only methods without a version specification. See the
 [adapter platform's wiki](https://github.com/vanillabp/adapter-platform-integration/wiki/Workflow-tasks#versions-of-a-process)
-for what each BPMS can tell.
+for what each BPMS can tell, and the blueprint [`bpmn-versioning`](https://github.com/vanillabp-blueprints/bpmn-versioning-springboot)
+for a model changed under running workflows.
 
 ### Call-activities
 
@@ -476,42 +599,40 @@ There are two different situations in which you might want to split up the BPMN 
 
 #### 1. Decomposition - a call-activity is used to hide complexity
 
-![](./readme/callactivity_propertiespanel.png)
+![Call-Activity](./readme/callactivity_propertiespanel.png)
 
 *Screenshot of [Camunda Modeler](https://camunda.com/en/download/modeler/)*
 
 In this situation the workflow-aggregate entity created for the root workflow is also used for the workflows spawned by call-activities. The reason for this is, that one still could put the content of the call-activities BPMN into to parent BPMN (e.g. as an embedded subprocess).
 
-Both processes belong to the same workflow-aggregate, and the aggregate has exactly one `ProcessService` (that is what `ProcessService<Ride>` injects). The called process is therefore declared as a *secondary* process of the service bean which declares the process to be started:
+Both processes belong to the same workflow-aggregate, and the aggregate has exactly one `ProcessService` (that is what `ProcessService<LoanApproval>` injects). The called process is therefore declared as a *secondary* process of the service bean which declares the process to be started:
 
 ```java
 @Component
 @WorkflowService(
-        workflowAggregateClass = Ride.class,
-        bpmnProcess = @BpmnProcess(bpmnProcessId = "TaxiRide"),
-        secondaryBpmnProcesses = @BpmnProcess(bpmnProcessId = "DetermineDriver"))
-public class TaxiRide {
+        workflowAggregateClass = LoanApproval.class,
+        bpmnProcess = @BpmnProcess(bpmnProcessId = "loan_approval"),
+        secondaryBpmnProcesses = @BpmnProcess(bpmnProcessId = "risk_assessment"))
+public class LoanApprovalService {
   ...
 }
 ```
-
-*Hint:* In this example the attribute `bpmnProcess` could be removed since the BPMN process-id is the same as the service's class-name ("convention over configuration").
 
 The handlers of the called process may live in a service bean of their own, as long as that bean declares the same `bpmnProcess`:
 
 ```java
 @Component
 @WorkflowService(
-        workflowAggregateClass = Ride.class,
-        bpmnProcess = @BpmnProcess(bpmnProcessId = "TaxiRide"))
-public class DetermineDriver {
+        workflowAggregateClass = LoanApproval.class,
+        bpmnProcess = @BpmnProcess(bpmnProcessId = "loan_approval"))
+public class RiskAssessmentService {
   ...
 }
 ```
 
 What does **not** work is two service beans of one workflow-aggregate declaring different processes as their `bpmnProcess`: `startWorkflow` starts one process, and which one that is must not depend on the order classes are found in. VanillaBP reports that while the application starts (Quarkus: while it is built), naming both classes and both processes.
 
-#### 1. Reuse - a call-activity is used to reuse a section of a process by other processes, too
+#### 2. Reuse - a call-activity is used to reuse a section of a process by other processes, too
 
 In this situation the call-activity's process is used in different contexts of different parent-processes. Therefore, also a separate workflow-aggregate has to be defined and used.
 
@@ -520,18 +641,18 @@ In order to support this notion the target process is not modeled as a call-acti
 ```java
 @Component
 @WorkflowService(workflowAggregateClass = Payment.class)
-public class ChargeCreditCard {
+public class ChargeAccount {
   ...
 }
 ```
 
-![Reuse instead of decomposition](./readme/call-activity.png)
+![Reuse as a participant](./readme/call-activity.png)
 
 *Screenshot of [Camunda Modeler](https://camunda.com/en/download/modeler/)*
 
 ### Multi-instance
 
-![](./readme/multi-instance.png)
+![Multi-Instance](./readme/multi-instance.png)
 
 *Screenshot of [Camunda Modeler](https://camunda.com/en/download/modeler/)*
 
@@ -541,48 +662,61 @@ For multi-instance executions typically a lot of process variables are created a
 2. The number of index of the current element
 3. The total number of elements
 
-To avoid problems on serializing and deserializing elements:
+To keep the values a BPMS has to serialize small:
 
-1. Don't use collection values for multi-instance activities.
-2. Use attribute `loop-cardinality` instead to simply define the number of iterations.
+1. Iterate over a collection of ids the aggregate shares, or use `loop-cardinality` to define the number of iterations.
+2. Don't hand the BPMS collections of complex objects.
 3. In case of dynamically changing collections use attribute `completionCondition`.
-4. Fetch the current element on your own based on the current iteration's index.
+4. Fetch what an iteration works on from the aggregate, based on the element or the index handed to the method.
 
 Especially the last item is important: If you ask the process engine to handle the collection to retrieve the current element it might be that this is not done in the most efficient way, since the process engine does not know about the details of the underlying data (typically the workflow-aggregate). Therefore, it is better to fetch the element as part of the method the iteration is used for.
 
 #### Tasks
 
-In case of multi-instance the current element (for collection-based tasks), the current iteration's number and the total number of elements (for cardinality-based tasks) can be passed to any method called.
+In case of multi-instance the current element (for collection-based tasks), the current iteration's number and the total number of elements can be passed to any method called.
 
 To announce which values you are interested in, add further method-parameters annotated by one of these annotations:
 * `@MultiInstanceElement` to pass the current element
-* `@MultiInstanceIndex` to pass the current iterations index
+* `@MultiInstanceIndex` to pass the current iterations index, counted from zero
 * `@MultiInstanceTotal` to pass the total number of iterations
 
-*Cardinality-based:*
+Each of them names the BPMN id of the multi-instance element it asks about, because a method may sit inside more than one iteration at once:
 
 ```java
+private static final String REQUEST_PARTNER_OFFER = "ServiceTask_RequestPartnerOffer";
+
 @WorkflowTask
-public void requestRideOfferFromDriver(Ride ride,
-    @MultiInstanceIndex int index) {
-  final var driver = ride.getDrivers().get(index);
+public void requestPartnerOffer(LoanApproval loanApproval,
+    @MultiInstanceElement(REQUEST_PARTNER_OFFER) String partnerId,
+    @MultiInstanceIndex(REQUEST_PARTNER_OFFER) int index,
+    @MultiInstanceTotal(REQUEST_PARTNER_OFFER) int total) {
   ...
 }
 ```
 
-*Collection-based:*
+A cardinality-based task has no element to hand over, so it asks for the index and fetches what it needs itself:
 
 ```java
 @WorkflowTask
-public void requestRideOfferFromDriver(Ride ride,
-    @MultiInstanceElement String driverId) {
+public void requestPartnerOffer(LoanApproval loanApproval,
+    @MultiInstanceIndex(REQUEST_PARTNER_OFFER) int index) {
+  final var partnerId = loanApproval.getPartnerIds().get(index);
   ...
 }
 ```
 
 #### Embedded subprocesses
 
-For multi-instance embedded-subprocesses the iteration is used at tasks within that embedded-subprocess. For method parameters annotated by `@MultiInstanceIndex`, `@MultiInstanceTotal` or  `@MultiInstance` the values of the first multi-instance parent activity are passed to the business method.
+For multi-instance embedded-subprocesses the iteration is used at tasks within that embedded-subprocess. A task inside such a subprocess asks the subprocess about its iteration by naming the subprocess' BPMN id, and it does so whether it is multi-instance itself or not:
+
+```java
+@WorkflowTask
+public void summariseRegion(LoanApproval loanApproval,
+    @MultiInstanceElement("SubProcess_AssessRegion") String regionId,
+    @MultiInstanceIndex("SubProcess_AssessRegion") int index) {
+  ...
+}
+```
 
 *Nested multi-instance activities*:
 
@@ -596,36 +730,42 @@ To handle these complex situations a `MultiInstanceElementResolver` bean can be 
 
 ```java
 @WorkflowTask
-public void cancelRideOfferOfDriver(Ride ride,
-    @MultiInstanceElement(resolver = DriverResolver.class) Driver driver) {
+public void requestPartnerOffer(LoanApproval loanApproval,
+    @MultiInstanceElement(resolverBean = IterationResolver.class) Iteration iteration) {
   ...
 }
 ```
 
-A Spring-bean implementing the resolver class is used to convert the current multi-instance execution-context into an object used by the business-method. Using this technique hides the complexity and makes it reusable for different activities within the same BPMN-context. A resolver has to implement the interface `MultiInstanceElementResolver`.
+A Spring-bean implementing the resolver class is used to convert the current multi-instance execution-context into an object used by the business-method. Using this technique hides the complexity and makes it reusable for different activities within the same BPMN-context. A resolver has to implement the interface `MultiInstanceElementResolver`, naming the elements it wants to be handed and building one value out of them.
 
 Example:
 
 ```java
 @Component
-public class DriverResolver implements MultiInstanceElementResolver<Ride, Driver> {
-    @Autowired
-    private DriversService drivers;
-    
-    public ProductLicense resolve(Ride ride,
-            Map<String, MultiInstance<Object>> nestedMultiInstanceContext) {
-            
-        String driverId = nestedMultiInstanceContext
-                .get("RequestRideOffer").getElement();
-        String index = nestedMultiInstanceContext
-                .get("CancelNotRequiredRide").getIndex();
-        
-        return drivers.getDriverByIdAndIndex(driverId, index);
+public class IterationResolver
+        implements MultiInstanceElementResolver<LoanApproval, Iteration> {
+
+    static final String ASSESS_REGION = "SubProcess_AssessRegion";
+    static final String REQUEST_PARTNER_OFFER = "ServiceTask_RequestPartnerOffer";
+
+    public Collection<String> getNames() {
+        return List.of(ASSESS_REGION, REQUEST_PARTNER_OFFER);
+    }
+
+    public Iteration resolve(LoanApproval loanApproval,
+            Map<String, MultiInstance<Object>> multiInstances) {
+
+        var region = multiInstances.get(ASSESS_REGION);
+        var partner = multiInstances.get(REQUEST_PARTNER_OFFER);
+
+        return new Iteration(
+                (String) region.getElement(), region.getIndex(),
+                (String) partner.getElement(), partner.getIndex());
     }
 }
 ```
 
-In this example the element of the collection based `RequestRideOffer` multi-instance embedded subprocess is used next to the index of the nested multi-instance `CancelNotRequiredRide`. Both values are passed to the internal `DriverService` to determine the required driver entity.
+The map is keyed by the BPMN id of the multi-instance element and sorted from the outermost iteration to the innermost one, and each entry tells the element, the index and the total of its level. In this example the region of the multi-instance embedded subprocess and the partner of the multi-instance task inside it are combined into one value which says what the pair means. The blueprints [`bpmn-multi-instance-task`](https://github.com/vanillabp-blueprints/bpmn-multi-instance-task-springboot) and [`bpmn-multi-instance-subprocess`](https://github.com/vanillabp-blueprints/bpmn-multi-instance-subprocess-springboot) run both variants.
 
 ### User tasks and asynchronous tasks
 
@@ -637,12 +777,14 @@ In both situations one needs a reference id to be used to complete the task once
 
 ```java
 @WorkflowTask
-public void retrievePayment(
-        final Ride ride,
+public void requestPartnerApproval(
+        final LoanApproval loanApproval,
         final @TaskId String taskId) {
-    ride.setRetrievePaymentTaskId(taskId);
+    loanApproval.setPartnerApprovalTaskId(taskId);
 }
 ```
+
+That single parameter is what makes the task asynchronous: the method returning does **not** complete it, and the workflow stays there until the application says otherwise. The very same method without the parameter would complete the task by returning.
 
 *Heads up:* If the task-id is used in a workflow-task's method which is not able to be processed asynchronously then `null` is passed as a value (e.g. not a user-task or the BPMN-engine does not support asynchronous tasks).
 
@@ -650,42 +792,98 @@ public void retrievePayment(
 
 According to the life-cycle of asynchronous tasks there are two situations in which one might to get informed by the engine:
 
-![asynchronous tasks life-cycle events](./readme/user-task.png)
-
-*Screenshot of [Camunda Modeler](https://camunda.com/en/download/modeler/)*
+![UserTask lifecycle](./readme/user-task.png)
 
 A `@TaskEvent` annotated parameter can be used to mark a method to be called in one or in both situations. Depending on whether a `@TaskEvent` annotated parameter is given and [it's value](./src/main/java/io/vanillabp/spi/service/TaskEvent.java), the workflow-method is called on each event:
 
 * `@TaskEvent(TaskEvent.Event.CREATED)`: The workflow-method is called only when the task is created.
-* `@TaskEvent(TaskEvent.Event.CANCELED)`: The workflow-method is called only when the task is canceled (e.g. due to interrupting boundary events). It can be used to unset a task-id previously stored (e.g. `ride.setRetrievePaymentTaskId(null)`).
+* `@TaskEvent(TaskEvent.Event.CANCELED)`: The workflow-method is called only when the task is canceled (e.g. due to interrupting boundary events). It can be used to unset a task-id previously stored (e.g. `loanApproval.setPartnerApprovalTaskId(null)`).
 * `@TaskEvent(TaskEvent.Event.ALL)`: The workflow-method is called two times each for `CREATED` and `CANCELED`. The default behavior for the `@TaskEvent` annotation with no value given.
 * No `@TaskEvent` annotation: The workflow-method is called only when the task is created.
+
+A method interested in both writes the distinction out:
+
+```java
+@WorkflowTask
+public void requestPartnerApproval(
+        final LoanApproval loanApproval,
+        final @TaskId String taskId,
+        final @TaskEvent TaskEvent.Event event) {
+    switch (event) {
+        case CREATED -> partnerApprovals.request(loanApproval, taskId);
+        case CANCELED -> loanApproval.setPartnerApprovalTaskId(null);
+        default -> throw new IllegalStateException("Unexpected task event " + event);
+    }
+}
+```
 
 #### Completing asynchronous tasks
 
 On the `CREATED` event in case of a user task for example a workflow-method could send a notification to the user. In case of an asynchronous task the external service has to be called. The given task-id has to be stored to be used once the asynchronous task completes to make the BPMN-engine know the which task is done.
 
+Four methods of `ProcessService` end such a task, one pair per kind of task:
+
+|       Kind of task        |            Regular answer             |            Answer taking the error path            |
+|---------------------------|---------------------------------------|----------------------------------------------------|
+| user task                 | `completeUserTask(aggregate, taskId)` | `cancelUserTask(aggregate, taskId, bpmnErrorCode)` |
+| asynchronous service task | `completeTask(aggregate, taskId)`     | `cancelTask(aggregate, taskId, bpmnErrorCode)`     |
+
+The two "cancel" methods do not throw the task away: they end it by raising the BPMN error code given, so the workflow leaves the task through the matching error boundary event instead of the regular sequence flow. Both pairs need a transaction of the application, because the aggregate is saved along with the answer and a remote BPMS is told only after that transaction committed. A rollback therefore leaves the task open rather than answering for work which was undone.
+
+VanillaBP finds the BPMS holding the task itself, by asking the configured adapters in their order of priority. If none of them knows the id, a `TaskNotFoundException` explains why: the id is wrong or outdated, the task was completed long ago, or the workflow was terminated. A task which is merely completed already is a logged no-op rather than an error, so an answer arriving twice is harmless.
+
 In this example the task is completed by using the previously received task-id:
 
 ```java
 @RestController
-public class DriverGuiController {
+public class PartnerApprovalController {
     @Autowired
-    private ProcessService<Ride> rideService;
+    private ProcessService<LoanApproval> processService;
     @Autowired
-    private RideRepository rides;
-    @RequestMapping(
-            method = RequestMethod.GET,
-            value = "/gui/ride/{rideId}/payment")
-    public void completePayment(
-            @PathVariable("rideId") String rideId,
-            @RequestBody RideCharged rideCharged) {
-        final var ride = rides.findById(rideId);
-        ride.setChared(rideCharged.getAmount());
-        rideService.complete(ride, ride.getRetrievePaymentTaskId());
+    private LoanApprovalRepository loanApprovals;
+    @Transactional
+    @PostMapping("/api/loan-approval/{loanRequestId}/partner-approval")
+    public void partnerApproved(
+            @PathVariable("loanRequestId") String loanRequestId,
+            @RequestBody PartnerApproval approval) {
+        final var loanApproval = loanApprovals.findById(loanRequestId).orElseThrow();
+        loanApproval.setPartnerApproved(approval.isApproved());
+        processService.completeTask(
+                loanApproval,
+                loanApproval.getPartnerApprovalTaskId());
     }
 }
 ```
+
+The blueprints [`bpmn-user-task`](https://github.com/vanillabp-blueprints/bpmn-user-task-springboot) and [`bpmn-async-task`](https://github.com/vanillabp-blueprints/bpmn-async-task-springboot) show both pairs, including the cancel case.
+
+### The workflow module a service belongs to
+
+```java
+String workflowModuleId = processService.getWorkflowModuleId();
+```
+
+A `ProcessService` knows which [workflow module](https://github.com/vanillabp/adapter-platform-integration/wiki/Workflow-modules) it was built for, and says so. Applications ask for it where code is shared by several modules and has to name the one it is currently working for, in a log line or as the key of something stored per module. It is also the answer to "how far does a signal reach", because that is exactly the scope of `sendSignal`.
+
+### What the API throws
+
+The API throws three exceptions, all of them unchecked.
+
+* `WorkflowNotFoundException`, raised by `correlateMessage`, `aggregateChanged`,
+  `getProcessDefinitions` and `getWorkflowHistory`: no configured BPMS knows a workflow for this
+  aggregate. It never started, it ended long ago, or the aggregate's id is not the one the workflow
+  was started with.
+* `TaskNotFoundException`, raised by `completeUserTask`, `cancelUserTask`, `completeTask` and
+  `cancelTask`: no configured BPMS knows the given task. The id is wrong or outdated, the task was
+  removed without completion, or the workflow was terminated. A task which is merely completed
+  already is a warned no-op instead.
+* `ProcessDefinitionNotFoundException`, raised by `getBpmnXml`: no configured BPMS can resolve this
+  process definition id. The ids are opaque and namespaced per adapter, so pass back what
+  `getProcessDefinitions` reported, unchanged.
+
+`TaskException` is not in this list on purpose. It is not raised by the API but thrown by your own task method, and it is a [modelled business outcome](#wire-up-a-task) rather than an error.
+
+Each message names the adapters which were asked, in the order they were asked, so a failing call says which BPMS was involved without a debugger.
 
 ## Viewing BPMN and execution history of workflows
 
@@ -728,33 +926,35 @@ the BPMN-XML using the method `getBpmnXml`:
 
 ```java
 @Controller
-public class RideController {
+public class LoanApprovalDiagramController {
     @Autowired
-    private ProcessService<Ride> rideService;
-   
-    @Autowired
-    private RideRepository rides;
+    private ProcessService<LoanApproval> processService;
 
-    @GetMapping("/{rideId}/bpmn")
+    @Autowired
+    private LoanApprovalRepository loanApprovals;
+
+    @GetMapping("/{loanRequestId}/bpmn")
     public ResponseEntity<InputStreamResource> getBpmnXml(
-            @PathVariable final String rideId) {
-        var ride = rides.get(rideId);
-        var processDefinitions = rideService.getProcessDefinitions(ride, null);
-        var xml = service.getBpmnXml(processDefinitions.getFirst().id());
+            @PathVariable final String loanRequestId) {
+        var loanApproval = loanApprovals.findById(loanRequestId).orElseThrow();
+        var processDefinitions = processService.getProcessDefinitions(loanApproval, null);
+        var xml = processService.getBpmnXml(processDefinitions.getFirst().id());
         return ResponseEntity.ok(new InputStreamResource(xml));
     }
 }
 ```
 
+The process definition ID is an opaque string: VanillaBP namespaces the BPMS' own id with the adapter which can resolve it, because a workflow may run on any configured BPMS and `getBpmnXml` has no aggregate to derive one from. Pass it back unchanged.
+
 Typically, users want to see the BPMN colored according to the current state of the workflow.
 The data necessary for this is provided by the method `getWorkflowHistory`:
 
 ```java
-@GetMapping("/{rideId}/workflow-history")
+@GetMapping("/{loanRequestId}/workflow-history")
 public ResponseEntity<WorkflowHistory> getWorkflowHistory(
-        @PathVariable final String rideId) {
-    var ride = rides.get(rideId);
-    var workflowHistory = service.getWorkflowHistory(ride, null);
+        @PathVariable final String loanRequestId) {
+    var loanApproval = loanApprovals.findById(loanRequestId).orElseThrow();
+    var workflowHistory = processService.getWorkflowHistory(loanApproval, null);
     return ResponseEntity.ok(workflowHistory);
 }
 ```
@@ -768,6 +968,9 @@ Items in `elementsHistory` are sorted by their execution. Each
 contains when the element was executed (start- and end-time if already ended),
 whether there is an error or the element was canceled). The element id given
 can be used to find the right element in the BPMN viewer for proper coloring.
+The attribute `elementType` names what kind of element it was, as a `WorkflowElementType`
+(`SERVICE_TASK`, `USER_TASK`, `EXCLUSIVE_GATEWAY` and so on), and it is `UNKNOWN` for a BPMS
+which does not report types in its history.
 
 *Hint:* It depends on the BPMS used or its configuration whether the
 element history is available. If not available, the list is null.
@@ -807,11 +1010,12 @@ process definitions and retrieve the next level using the method `getProcessDefi
 of the call-activity's execution.
 
 A viewer might show the path of steps already digged down, each linked as a navigation to go back to upper processes
-or the main process.
+or the main process. The blueprint [`bpmn-history-and-diagram`](https://github.com/vanillabp-blueprints/bpmn-history-and-diagram-springboot)
+serves all three methods over HTTP.
 
 ## About the SPI
 
-## Prerequisites
+### Prerequisites
 
 You should know about [BPMN](https://en.wikipedia.org/wiki/Business_Process_Model_and_Notation) and you should be able to create meaningful models using a [modeler tool](https://camunda.com/en/download/modeler/).
 
@@ -843,10 +1047,13 @@ An implementation of the SPI is called adapter and hides all the details of a pa
 Available adapters:
 * [Camunda 7 adapter](https://github.com/vanillabp/camunda7-adapter)
 * [Camunda 8 adapter](https://github.com/vanillabp/camunda8-adapter)
+* [Process-Engine-API adapter](https://github.com/vanillabp/process-engine-api-adapter)
+
+Which adapter serves which BPMS, what to add as a dependency and what each BPMS can and cannot do is listed in the wiki page [BPMS adapters](https://github.com/vanillabp/adapter-platform-integration/wiki/BPMS-adapters). Several adapters may run side by side, which is what [migrating workflows from one BPMS to another](https://github.com/vanillabp/adapter-platform-integration/wiki/BPMS-migration) is built on. It is a matter of configuration and changes nothing about the code on this page, apart from the few places noted above where an API call reaches more than one BPMS.
 
 ### Concept
 
-Imagine you have to implement the business processing software of a taxi ride.
+Imagine you have to implement the business processing software of a loan approval.
 
 *How will the code be structured?*
 
@@ -858,7 +1065,7 @@ If external services or components are required then those service beans act as 
 
 In the best case only one service bean is sufficient. One workflow implemented by one service bean!
 
-In case of more complex processes typically sections of fulfillment can be identified (determine a driver, do the ride, handle payment, etc.) which can be used as semantical buckets mapped to separate service beans.
+In case of more complex processes typically sections of fulfillment can be identified (retrieve a rating, collect partner offers, handle payout, etc.) which can be used as semantical buckets mapped to separate service beans.
 
 *How are those service beans wired to the BPMN?*
 
@@ -866,13 +1073,13 @@ In terms of BPMN there are tasks (e.g. service-task, send-task, etc.) which are 
 
 All those names used to wire tasks or expressions should be in a natural language camel-case style and therefore defined by the BPMN designer (BPMN-first approach) or upfront by the developer (software-first approach). This should on one hand force the BPMN designer to name the expected data/behavior and on the other hand help developers to understand what they have to implement.
 
-The sum of those names forms the contract between the BPMN and the underlying implementation. As an example these are typical names used as part of a taxi ride workflow:
+The sum of those names forms the contract between the BPMN and the underlying implementation. As an example these are typical names used as part of a loan approval workflow:
 
-- RideBooked (message name)
-- determinePotentialDrivers (service task)
-- requestRideOfferFromDriver (send task)
-- noRideAvailable (aggregate field)
-- customerCharged (aggregate field)
+- LoanRequested (message name)
+- retrieveCreditRating (service task)
+- requestPartnerApproval (send task)
+- ratedAcceptable (aggregate attribute read by a gateway)
+- customerInformed (aggregate attribute)
 
 *How is data handled?*
 
