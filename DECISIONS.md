@@ -62,6 +62,9 @@ startup check reports that before the first workflow runs.
 
 ### 5. A method serves a version range of a deployed process, not a business version
 
+*Superseded by decision 8, which adds `@BpmnProcess` as the fourth annotation carrying a version and
+says what a method inheriting a range promises.*
+
 `version` on `@WorkflowTask`, `@WorkflowStartedByBpms` and `@WorkflowEnded` names versions of the
 DEPLOYED process definition as the BPMS counts them, or a version tag of the model. It exists
 because a BPMS keeps every version it was ever given and workflows keep running on the old ones
@@ -96,3 +99,28 @@ contradiction between it and the model is reported while the application boots r
 incident on a live workflow. The same id is what a user task is completed by, so both kinds of
 waiting look the same to the application.
 See [User tasks and asynchronous tasks](./README.md#user-tasks-and-asynchronous-tasks).
+
+### 8. A version range is declared per method or per workflow service class
+
+`@BpmnProcess(version = ...)` is the fallback of `@WorkflowTask`, `@WorkflowStartedByBpms` and
+`@WorkflowEnded`. A method naming no version serves the range of the process it was declared with, a
+method naming one keeps it word by word, and the two are never intersected. So a class holding the
+handlers of one generation of a model says that once, where decision 5 left it saying the same thing
+once per method - and where a method added later without the attribute silently served every version.
+
+The attribute has been on `@BpmnProcess` since version 1 and nothing read it. Giving it this meaning
+is what makes it documentable, and it is a promise to an application which wrote it back then
+believing it worked: the platform's `UPGRADE.md` says what such an application has to check.
+
+Two rules of decision 5 hold unchanged for the range a method ends up with, whichever annotation it
+came from. Ranges of one BPMN element must not overlap, which now also holds for two classes
+declaring the same process, the shape this exists for and legal as long as their ranges are
+disjoint. And a delivery whose version the BPMS does not report is served only by a method WITHOUT a
+range: a method which inherits one is restricted, so serving such a delivery needs a method whose
+class names no version either. Every message about a range names the declaration it came from, since
+the method it complains about may carry no attribute at all.
+
+Which declaration applies is decided by the process a delivery came from, not by the class: a class
+declares one `bpmnProcess` plus any number of `secondaryBpmnProcesses`, each with a version of its
+own, and one method may serve elements of both.
+See [Versioning of BPMN business-processes](./README.md#versioning-of-bpmn-business-processes).

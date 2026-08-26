@@ -586,7 +586,39 @@ The same attribute exists on `@WorkflowStartedByBpms` and `@WorkflowEnded` and m
 
 Two things are worth knowing. Several methods may serve one BPMN element as long as their versions do not overlap;
 overlapping specifications are a mistake VanillaBP reports when the application starts, naming both methods. And a
-BPMS which does not report the version of a process serves only methods without a version specification. See the
+BPMS which does not report the version of a process serves only methods without a version specification.
+
+Where a change is big enough that a whole class of handlers belongs to the old model, declare the range on the
+process instead of on every method. `@BpmnProcess(version = ...)` is the fallback of all three method annotations:
+
+```java
+@Component
+@WorkflowService(
+        workflowAggregateClass = LoanApproval.class,
+        bpmnProcess = @BpmnProcess(bpmnProcessId = "loan_approval", version = "<10"))
+public class LoanApprovalUpToTen {
+
+  @WorkflowTask                      // serves versions below 10
+  public void retrieveCreditRating(
+          final LoanApproval loanApproval) { ... }
+
+  @WorkflowTask(version = "5-7")     // its own range, which the class does not narrow
+  public void assessRisk(
+          final LoanApproval loanApproval) { ... }
+
+}
+```
+
+A method naming its own range keeps it word by word, even where it reaches outside the range of its class: the two
+are not intersected, because a range you cannot read off the annotation in front of you is worse than one repeated.
+Every declaration carries its own version, the entries of `secondaryBpmnProcesses` included, so a method serving
+elements of two processes inherits per process. Two classes may declare the same process, which is what this is for -
+one per generation of the model - as long as their ranges are disjoint.
+
+Mind the one surprise: a method which INHERITS a range is as restricted as one naming it, so a BPMS which reports no
+version reaches neither. Serving such a delivery needs a method whose class names no version either.
+
+See the
 [adapter platform's wiki](https://github.com/vanillabp/adapter-platform-integration/wiki/Workflow-tasks#versions-of-a-process)
 for what each BPMS can tell, and the blueprint [`bpmn-versioning`](https://github.com/vanillabp-blueprints/bpmn-versioning-springboot)
 for a model changed under running workflows.
