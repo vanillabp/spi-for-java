@@ -487,7 +487,7 @@ One can use the `ProcessService` to perform that message correlation:
     }
 ```
 
-VanillaBP finds the workflow by the aggregate's id, so no correlation key is modelled and none is passed. If no configured BPMS knows the workflow, a `WorkflowNotFoundException` says so rather than losing the message silently.
+VanillaBP finds the workflow by the aggregate's id, so no correlation key is modelled and none is passed. If no configured BPMS knows the workflow, a `WorkflowNotFoundException` says so rather than losing the message silently (`TaskOperationsDispatchTest#unknownWorkflowRaisesGuidingException` of the platform integration, on both platforms).
 
 *Hint:* To start a new workflow by a message start event use `startWorkflowByMessage` instead.
 In this situation the aggregate must not be persisted before.
@@ -550,7 +550,7 @@ public void loanApprovalEnded(LoanApproval loanApproval, WorkflowEnd end) {
 
 VanillaBP loads the workflow aggregate, calls the method and saves the aggregate. The annotation is optional and a model without it pays nothing: adapters attach their listener only where a method exists. The method may take the aggregate and a `WorkflowEnd` in any order, and `WorkflowEnd` says when the workflow ended, which end event it reached where the BPMS reports one, and whether it `COMPLETED` or was `TERMINATED` without reaching an end event. An adapter whose BPMS cannot tell the two apart reports `COMPLETED` and says so in its documentation, because a faked distinction would be worse than none.
 
-Two properties worth knowing. The notification is **at-least-once**, so write the method idempotently. And whether it runs in the transaction which ended the workflow depends on the BPMS: an embedded engine ends the workflow and calls the method in one transaction, a remote BPMS delivers the notification afterwards. What a BPMS can report about the KIND of end also differs - see the [adapter platform's wiki](https://github.com/vanillabp/adapter-platform-integration/wiki/Starting-workflows#when-a-workflow-ends) and the blueprint [`bpmn-workflow-ended`](https://github.com/vanillabp-blueprints/bpmn-workflow-ended-springboot).
+Two properties worth knowing. The notification is **at-least-once**, so write the method idempotently. And whether it runs in the transaction which ended the workflow depends on the BPMS: an embedded engine ends the workflow and calls the method in one transaction, a remote BPMS delivers the notification afterwards (`WorkflowEndedTest` of the platform integration holds both, `embeddedBpmsJoinTheCallersTransaction` and `withoutAMethodNothingHappens`). That the same notification may arrive twice is an assumption about the BPMS rather than something a test produces: a BPMS which acknowledged every notification exactly once would make the method's idempotency unnecessary, and none of the three does. What a BPMS can report about the KIND of end also differs - see the [adapter platform's wiki](https://github.com/vanillabp/adapter-platform-integration/wiki/Starting-workflows#when-a-workflow-ends) and the blueprint [`bpmn-workflow-ended`](https://github.com/vanillabp-blueprints/bpmn-workflow-ended-springboot).
 
 ### Versioning of BPMN business-processes
 
@@ -885,6 +885,8 @@ The API throws three exceptions, all of them unchecked.
 
 Each message names the adapters which were asked, in the order they were asked, so a failing call says which BPMS was involved without a debugger.
 
+All three are held by the platform integration: `TaskOperationsDispatchTest#unknownWorkflowRaisesGuidingException`, `#unknownTaskRaisesGuidingException` and `#unknownUserTaskRaisesGuidingException` for the first two, `ViewerApiTest#unknownProcessDefinitionRaisesGuidingError` and `#malformedProcessDefinitionIdRaisesGuidingError` for the third, and `TaskOperationsDispatchTest#completedTaskIsIdempotentNoOp` for the completed task which is a warned no-op instead of an exception.
+
 ## Viewing BPMN and execution history of workflows
 
 Some business applications might require viewing the BPMN and execution history of workflows.
@@ -1086,6 +1088,10 @@ The sum of those names forms the contract between the BPMN and the underlying im
 A domain aggregate is used as a persistent entity to store data either required by the process to execute (e.g. as part of expressions) or by the underlying implementation to fulfill tasks. This aggregate does not keep all the data ever needed by the workflow but stores at least references to retrieve required values on demand.
 
 If particular attributes are required often (e.g. nearly every task) then this aggregate can be used as a *cache* of the original source of data. Depending on the use-case one might has to implement a proper update strategy.
+
+## Where the promises on this page are held
+
+This module ships annotations and interfaces and no runtime of its own, so no test here can fail when a sentence above stops being true. What holds them is the platform integration, and its module READMEs name the test per section: [`migration-adapter/README.md`](https://github.com/vanillabp/adapter-platform-integration/blob/main/migration-adapter/README.md) for everything the core decides, and each adapter's README for what its BPMS decides. Where a promise belongs to the BPMS rather than to VanillaBP, the sentence above says so at the place it is made, which is the same rule in its other form.
 
 ## Decision log
 
