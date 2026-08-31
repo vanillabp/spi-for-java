@@ -33,7 +33,9 @@ import java.lang.annotation.Target;
  * engine ends the workflow and calls the method in ONE transaction, a remote BPMS
  * delivers the notification afterwards.
  * <p>
- * What the version range names is decision 5 in the repository's DECISIONS.md.
+ * What the version range names, why a delivery without a reported version is served only by a
+ * method without one, and how a method naming none takes the range of its
+ * {@link BpmnProcess}, is decision 8 in the repository's DECISIONS.md.
  */
 @Retention(RUNTIME)
 @Target(METHOD)
@@ -76,6 +78,10 @@ public @interface WorkflowEnded {
    * A BPMS which does not report the version of a process serves every method
    * regardless of this attribute, and specifications naming a version tag need a
    * BPMS which can be asked about its tags (Camunda 8 needs its query API for that).
+   * <p>
+   * Naming no version does not mean &quot;every version&quot; unconditionally: the method
+   * then serves the range of the {@link BpmnProcess} its process was declared with, which
+   * is how a whole workflow service class is bound to one generation of a model.
    *
    * @return The versions of the deployed BPMN process this method serves.
    */
