@@ -618,6 +618,23 @@ one per generation of the model - as long as their ranges are disjoint.
 Mind the one surprise: a method which INHERITS a range is as restricted as one naming it, so a BPMS which reports no
 version reaches neither. Serving such a delivery needs a method whose class names no version either.
 
+Renaming the BPMN process itself is the one refactoring which reaches into the BPMS, and it is the second reason
+`secondaryBpmnProcesses` exists. The old id stays in the BPMS with every version ever deployed under it and with the
+workflows still running on them, so name it as a secondary process together with the versions the BPMS still holds
+under it, and the methods of your class keep serving those workflows until the last of them ends:
+
+```java
+@WorkflowService(
+        workflowAggregateClass = OrderApproval.class,
+        bpmnProcess = @BpmnProcess(bpmnProcessId = "OrderApproval"),
+        secondaryBpmnProcesses = @BpmnProcess(bpmnProcessId = "order_approval", version = "1-3"))
+```
+
+Each id is counted from 1 by the BPMS, so the versions of the old id and of the new one are different models with the
+same numbers. The
+[recipe for a rename](https://github.com/vanillabp/adapter-platform-integration/wiki/Renaming-a-BPMN-process)
+walks through it, including what the application says on the next boot.
+
 See the
 [adapter platform's wiki](https://github.com/vanillabp/adapter-platform-integration/wiki/Workflow-tasks#versions-of-a-process)
 for what each BPMS can tell, and the blueprint [`bpmn-versioning`](https://github.com/vanillabp-blueprints/bpmn-versioning-springboot)
