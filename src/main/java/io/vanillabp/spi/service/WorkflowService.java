@@ -34,8 +34,32 @@ public @interface WorkflowService {
   BpmnProcess bpmnProcess() default @BpmnProcess(bpmnProcessId = BpmnProcess.USE_CLASS_NAME);
 
   /**
-   * @return Any additional process definition ids as defined in the BPMN for which the
-   *         annotated service is responsible for.
+   * Any further BPMN processes the annotated service is responsible for. A process called by
+   * a call activity of the primary one is the common case, and a process which was RENAMED is
+   * the second.
+   * <p>
+   * Renaming a BPMN process is the one refactoring which reaches into the BPMS: the old id
+   * stays there with every version ever deployed under it and with the workflows still
+   * running on them, while the software brings only the new name. Naming the old id here,
+   * with the {@link BpmnProcess#version()} of the versions the BPMS still holds under it,
+   * keeps those workflows served by the methods of this class:
+   *
+   * <pre>
+   * &#64;WorkflowService(
+   *         workflowAggregateClass = OrderApproval.class,
+   *         bpmnProcess = &#64;BpmnProcess(bpmnProcessId = "OrderApproval"),
+   *         secondaryBpmnProcesses = &#64;BpmnProcess(bpmnProcessId = "order_approval", version = "1-3"))
+   * </pre>
+   *
+   * Each entry is a declaration of its own and carries its own version range. Mind what that
+   * means for a rename: a BPMS counts the versions of each process id separately, so version 2
+   * of the old id and version 2 of the new one are different models, and a range naming numbers
+   * belongs to the declaration it stands on rather than to the class.
+   * <p>
+   * A workflow is STARTED under {@link #bpmnProcess()} only. A secondary process serves what is
+   * already running, and the workflows of the old id end under it.
+   *
+   * @return The further BPMN process definition ids the annotated service is responsible for
    */
   BpmnProcess[] secondaryBpmnProcesses() default {};
 }
