@@ -238,6 +238,8 @@ public class LoanApprovalService {
 
 If the service-bean becomes huge due to the number of tasks of the workflow then multiple service-beans can be annotated with the same `@WorkflowService` annotation. The only precondition for this is to avoid duplicate task wiring. However, if there is a method wired twice this will be detected on startup and reported by throwing an exception.
 
+The annotation belongs on the class holding the `@WorkflowTask` methods. An interface carrying it is refused, and so is an annotation of your own composing it, with a message naming the type and the classes which brought it in: Java does not inherit a method annotation from an interface, so the handlers you wrote would not be the ones VanillaBP finds, and Spring Boot and Quarkus would not even find the same ones. Where several classes are meant to share one declaration, put it on a common superclass, which is inherited and works.
+
 ### Wire up a task
 
 Similar to [wiring a process](#wire-up-a-process) an aspect-oriented approach is used for the task binding. This applies to service tasks, send tasks, business rule tasks and user tasks.
