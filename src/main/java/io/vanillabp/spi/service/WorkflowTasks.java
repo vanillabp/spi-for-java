@@ -9,7 +9,7 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.Target;
 
 /**
- * @see {@link WorkflowTask}
+ * @see WorkflowTask
  */
 @Retention(RUNTIME)
 @Target(METHOD)
