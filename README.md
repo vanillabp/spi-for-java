@@ -326,6 +326,8 @@ public void retrieveCreditRating(
 
 This is the one direction in which a value travels *into* your code without passing the aggregate. It is a value of the model, so the model may point the task at another rating provider without the code being touched.
 
+The parameter may be a `String`, any of the number types, a `Boolean` or `Object`, and VanillaBP converts what the BPMS reported into the type you declared. A number is converted only where the conversion keeps it. A `BigDecimal` of `120.50` therefore reaches a `Double` parameter as `120.5`, while the same value bound to an `int` ends the task with a message naming the value and the type, rather than arriving as `120`. Declare the parameter as `Object` where you want to see the value the way your BPMS sent it. The pairs are listed in the [migration adapter's documentation](https://github.com/vanillabp/adapter-platform-integration/blob/main/migration-adapter/README.md).
+
 #### The transaction is VanillaBP's
 
 VanillaBP loads the aggregate, calls the method and saves the aggregate, all in one transaction it owns. Do not declare a transaction of your own on a workflow service class or on a `@WorkflowTask` method: it would join VanillaBP's transaction and mark it rollback-only as soon as a `TaskException` passes it, which discards everything the method wrote although the workflow takes the BPMN error path. VanillaBP does not let that happen unnoticed and refuses to boot, naming the method. Methods calling `ProcessService` do need their own transaction, so annotate those instead of the whole class.

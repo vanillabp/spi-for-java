@@ -11,15 +11,23 @@ import java.lang.annotation.Target;
 /**
  * This annotation is used to define a parameter for processing a certain
  * process-task (e.g. service-task, send-task, etc.):
- * 
+ *
  * <pre>
  * &#64;WorkflowTask
  * public void setStatus(
  *         final MyWorkflowAggregate aggregate,
  *         &#64;TaskParam("status") String status) throws {@link TaskException} {
  * </pre>
- * 
+ *
  * The status has to be defined an input-mapping of the task.
+ * <p>
+ * The parameter may be declared as a String, as any of the number types, as a
+ * Boolean or as Object, and VanillaBP converts the value the BPMS reported into
+ * that type. A number is converted only where the conversion keeps it: a value
+ * which would arrive as a different number ends the task instead, with a message
+ * naming the value and the declared type. Declare the parameter as Object to see
+ * the value the way the BPMS sent it. Which pairs convert and which are refused is
+ * documented with the platform, in the migration adapter's README.
  */
 @Retention(RUNTIME)
 @Target(ElementType.PARAMETER)
