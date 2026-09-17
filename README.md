@@ -1,5 +1,7 @@
 ![](./readme/vanillabp-headline.png)
 
+[![Apache License V.2](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](./LICENSE)
+
 *Vanilla BP* is **an aspect orientated service provider interface (SPI) for workflow systems as a Java developer would expect it to be**.
 
 Every example on this page is about approving a loan: a customer asks for an amount, a credit rating is retrieved, partners are asked for an offer and the request is decided. That is the same business case the [VanillaBP blueprints](https://github.com/vanillabp-blueprints) implement, so a link followed from here lands in a model you have already read about. The blueprints name their beans after the role they play (`Workflow`, `WorkflowTaskHandler`, `Service`), because each of them holds exactly one workflow; on this page the classes are named after the business case (`LoanApproval`, `LoanApprovalService`), because the examples stand next to each other without that context. The process id, the message names, the task names and the attributes of the workflow-aggregate are literally the same in both places.
