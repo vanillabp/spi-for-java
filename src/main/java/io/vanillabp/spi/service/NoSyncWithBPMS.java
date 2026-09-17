@@ -27,6 +27,11 @@ import java.lang.annotation.Target;
  * annotated element AND everything below it (a nested object's attributes, a
  * collection's elements) until an inner element says otherwise.
  * <p>
+ * One of these annotations is what an aggregate needs to be started at all where it would
+ * otherwise share everything: a workflow whose aggregate keeps nothing back does not start unless
+ * its configuration allows the full sync
+ * (<code>vanillabp.workflow-modules.&lt;module&gt;.workflows.&lt;process&gt;.allow-full-sync-with-bpms</code>).
+ * <p>
  * Why what a BPMS gets to see is declared rather than derived is decision 3 in the repository's
  * DECISIONS.md.
  *

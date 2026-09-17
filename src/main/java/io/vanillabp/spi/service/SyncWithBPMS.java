@@ -40,6 +40,12 @@ import java.lang.annotation.Target;
  * could reach into the application instead, and Camunda 7 did until it turned out
  * that a model written that way breaks on every remote BPMS.
  * <p>
+ * <b>An aggregate which shares everything has to say so.</b> Sharing everything is where an
+ * application lands by annotating nothing, so the platform integration does not start such a
+ * workflow silently. Either the aggregate says what its models need, which is the recommendation,
+ * or the workflow allows the full sync in the configuration
+ * (<code>vanillabp.workflow-modules.&lt;module&gt;.workflows.&lt;process&gt;.allow-full-sync-with-bpms</code>).
+ * <p>
  * Why what a BPMS gets to see is declared rather than derived, and what that has to do with running
  * the same model on another BPMS, is decision 3 in the repository's DECISIONS.md.
  *
