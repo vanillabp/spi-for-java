@@ -43,8 +43,9 @@ Every example on this page is about approving a loan: a customer asks for an amo
    4. [Available Adapters](#available-adapters)
    5. [Concept](#concept)
 6. [Decision log](#decision-log)
-7. [Noteworthy & Contributors](#noteworthy--contributors)
-8. [License](#license)
+7. [Contributing](#contributing)
+8. [Noteworthy & Contributors](#noteworthy--contributors)
+9. [License](#license)
 
 ## How it looks like
 
@@ -1156,6 +1157,12 @@ DECISIONS.md`, numbers are never reused, and an overturned entry stays and names
 a citation written today still resolves in a year. The entries are the promises this API makes to
 an application: where the state of a workflow lives, what addresses it, what the BPMS gets to see,
 and what an exception out of a handler means.
+
+## Contributing
+
+Issues and pull requests are welcome. [`CONTRIBUTING.md`](./CONTRIBUTING.md) says how this
+repository is built and what is asked before a change is written. A change here reaches every
+application and all four BPMS adapters at once, so additive is the default.
 
 ## Noteworthy & Contributors
 
