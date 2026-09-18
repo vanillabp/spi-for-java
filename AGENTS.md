@@ -6,6 +6,23 @@ additive is the default and a removal needs a deprecation which names the releas
 Read [`README.md`](./README.md) first. Its anchors are linked from the blueprints and from the
 wikis, so a heading is renamed only together with everything pointing at it.
 
+## What belongs in `UPGRADE.md`
+
+[`UPGRADE.md`](./UPGRADE.md) describes the step from VanillaBP 1 to the 2.0 release and nothing
+else. An entry is owed where a version-1 application behaves differently or has to change
+something, and it is written under the version line which brought it. A change between two
+snapshots earns no entry, however much work it was: it would ask the reader to follow how the
+release was built instead of carrying out their own upgrade, and git holds that history anyway.
+
+What does not go there still has a place. The end state of a new part of the API belongs in
+[`README.md`](./README.md) and in the wiki, which is where users read. A reasoning several places
+in this repository rely on belongs in [`DECISIONS.md`](./DECISIONS.md). What is neither belongs
+nowhere, and the commit message is where it is said.
+
+These entries feed the user-facing wiki page
+[Migrating from version 1](https://github.com/vanillabp/adapter-platform-integration/wiki/Migrating-from-version-1),
+which wins where the two disagree.
+
 ## The decision log is binding
 
 [`DECISIONS.md`](./DECISIONS.md) holds the decisions several places in this repository rely on. It
