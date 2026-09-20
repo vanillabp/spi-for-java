@@ -59,6 +59,15 @@
           <version>3.16.0</version>
           <configuration>
             <release>${version.java}</release>
+            <compilerArgs>
+              <!-- this repository is API and nothing else, so its javadoc is read twice.
+                   javac sees every class, the package private ones too, and that is where
+                   the plugin below never looks: it stops at protected, because that is what
+                   the published documentation shows. Every group is on except 'missing'. A
+                   comment nobody has written yet stays a warning, which is the line the
+                   plugin draws as well. -->
+              <arg>-Xdoclint:all,-missing</arg>
+            </compilerArgs>
           </configuration>
         </plugin>
         <plugin>
