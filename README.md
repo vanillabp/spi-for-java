@@ -555,7 +555,7 @@ public void loanApprovalEnded(LoanApproval loanApproval, WorkflowEnd end) {
 }
 ```
 
-VanillaBP loads the workflow aggregate, calls the method and saves the aggregate. The annotation is optional and a model without it pays nothing: adapters attach their listener only where a method exists. The method may take the aggregate and a `WorkflowEnd` in any order, and `WorkflowEnd` says when the workflow ended, which end event it reached where the BPMS reports one, and whether it `COMPLETED` or was `TERMINATED` without reaching an end event. An adapter whose BPMS cannot tell the two apart reports `COMPLETED` and says so in its documentation, because a faked distinction would be worse than none.
+VanillaBP loads the workflow aggregate, calls the method and saves the aggregate. The annotation is optional and a model without it pays nothing: adapters attach their listener only where a method exists. The method may take the aggregate and a `WorkflowEnd` in any order, and `WorkflowEnd` says when the workflow ended, which end event it reached where the BPMS reports one, and whether it `COMPLETED` or was `CANCELED` without reaching an end event. An adapter whose BPMS cannot tell the two apart reports `COMPLETED` and says so in its documentation, because a faked distinction would be worse than none.
 
 Two properties worth knowing. The notification is **at-least-once**, so write the method idempotently. And whether it runs in the transaction which ended the workflow depends on the BPMS: an embedded engine ends the workflow and calls the method in one transaction, a remote BPMS delivers the notification afterwards (`WorkflowEndedTest` of the platform integration holds both, `embeddedBpmsJoinTheCallersTransaction` and `withoutAMethodNothingHappens`). That the same notification may arrive twice is an assumption about the BPMS rather than something a test produces: a BPMS which acknowledged every notification exactly once would make the method's idempotency unnecessary, and none of the three does. What a BPMS can report about the KIND of end also differs - see the [adapter platform's wiki](https://github.com/vanillabp/adapter-platform-integration/wiki/Starting-workflows#when-a-workflow-ends) and the blueprint [`bpmn-workflow-ended`](https://github.com/vanillabp-blueprints/bpmn-workflow-ended-springboot).
 
@@ -886,7 +886,7 @@ Four methods of `ProcessService` end such a task, one pair per kind of task:
 
 The two "cancel" methods do not throw the task away: they end it by raising the BPMN error code given, so the workflow leaves the task through the matching error boundary event instead of the regular sequence flow. Both pairs need a transaction of the application, because the aggregate is saved along with the answer and a remote BPMS is told only after that transaction committed. A rollback therefore leaves the task open rather than answering for work which was undone.
 
-VanillaBP finds the BPMS holding the task itself, by asking the configured adapters in their order of priority. If none of them knows the id, a `TaskNotFoundException` explains why: the id is wrong or outdated, the task was completed long ago, or the workflow was terminated. A task which is merely completed already is a logged no-op rather than an error, so an answer arriving twice is harmless.
+VanillaBP finds the BPMS holding the task itself, by asking the configured adapters in their order of priority. If none of them knows the id, a `TaskNotFoundException` explains why: the id is wrong or outdated, the task was completed long ago, or the workflow was canceled. A task which is merely completed already is a logged no-op rather than an error, so an answer arriving twice is harmless.
 
 In this example the task is completed by using the previously received task-id:
 
@@ -931,7 +931,7 @@ The API throws three exceptions, all of them unchecked.
   was started with.
 * `TaskNotFoundException`, raised by `completeUserTask`, `cancelUserTask`, `completeTask` and
   `cancelTask`: no configured BPMS knows the given task. The id is wrong or outdated, the task was
-  removed without completion, or the workflow was terminated. A task which is merely completed
+  removed without completion, or the workflow was canceled. A task which is merely completed
   already is a warned no-op instead.
 * `ProcessDefinitionNotFoundException`, raised by `getBpmnXml`: no configured BPMS can resolve this
   process definition id. The ids are opaque and namespaced per adapter, so pass back what
