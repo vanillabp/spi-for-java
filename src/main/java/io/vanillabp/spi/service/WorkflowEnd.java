@@ -29,9 +29,9 @@ public record WorkflowEnd(
 
     /**
      * The workflow ended without reaching an end event. Which of the modelled
-     * paths lead here is up to the BPMS: what one engine reports as a cancelation
-     * another may report as a completion. Each adapter's documentation says what
-     * its BPMS reports.
+     * paths lead here is up to the BPMS: what one engine reports as canceled
+     * another may report as completed. Each adapter's documentation says what its
+     * BPMS reports.
      */
     CANCELED
 
