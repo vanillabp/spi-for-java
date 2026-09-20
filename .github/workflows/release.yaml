@@ -43,7 +43,7 @@ jobs:
         uses: actions/setup-java@v5
         with:
           distribution: temurin
-          java-version: 17
+          java-version: 25
           cache: maven
           server-id: vanillabp-central
           # for secrets use env variables (set in each step which needs it) to avoid leaking them in files
