@@ -56,7 +56,7 @@
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-compiler-plugin</artifactId>
-          <version>3.10.1</version>
+          <version>3.16.0</version>
           <configuration>
             <release>${version.java}</release>
           </configuration>
@@ -108,7 +108,7 @@
       <plugin>
         <groupId>com.diffplug.spotless</groupId>
         <artifactId>spotless-maven-plugin</artifactId>
-        <version>3.1.0</version>
+        <version>3.10.2</version>
         <configuration>
           <pom>
             <includes>
