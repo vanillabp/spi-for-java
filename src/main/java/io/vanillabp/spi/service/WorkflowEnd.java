@@ -28,11 +28,12 @@ public record WorkflowEnd(
     COMPLETED,
 
     /**
-     * The workflow was ended without reaching an end event: cancelled or deleted
-     * by an operator, terminated by a terminate end event, or interrupted by an
-     * event of an enclosing scope.
+     * The workflow ended without reaching an end event. Which of the modelled
+     * paths lead here is up to the BPMS: what one engine reports as a cancelation
+     * another may report as a completion. Each adapter's documentation says what
+     * its BPMS reports.
      */
-    TERMINATED
+    CANCELED
 
   }
 
