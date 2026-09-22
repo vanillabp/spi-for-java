@@ -14,7 +14,10 @@ thing the code is allowed to cite.
 
 ## Building and testing
 
-Java 21 and Maven, without a wrapper:
+A JDK 21 or newer, and Maven, without a wrapper. The workflows build with the JDK named in
+`.github/workflows`, currently 25, so build with that one if you want to see what the pipeline sees.
+The class files stay at Java 21 either way, because that is what the property `version.java` in the
+root `pom.xml` compiles against:
 
 ```bash
 mvn spotless:apply
