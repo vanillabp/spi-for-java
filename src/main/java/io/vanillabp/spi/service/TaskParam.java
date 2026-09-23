@@ -36,6 +36,9 @@ import java.lang.annotation.Target;
 public @interface TaskParam {
 
   /**
+   * The name the input mapping of the BPMN element gives the value. That name belongs to the
+   * element, so it is neither an attribute of the workflow aggregate nor visible to another task.
+   *
    * @return The name of the local variables mapped in BPMN.
    */
   String value();

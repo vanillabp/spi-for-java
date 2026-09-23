@@ -79,7 +79,14 @@ bin/check-decision-numbers.sh
 
 Two tools read the javadoc, and each one sees a part the other misses. The compiler checks every
 class for a broken reference or broken HTML, the package private ones included. The javadoc plugin
-checks what the published documentation shows, so it starts at protected and stops there.
+checks what the published documentation shows, so it starts at protected and stops there. One thing
+below protected is shown as well: the fields a serializable class carries into its serialized form,
+which is why a private field of an exception is asked for a comment too.
+
+A comment which is missing breaks the build. Everything this repository publishes has one now, and
+the plugin fails on a warning so that it stays that way. Write the sentence rather than switching
+the check off, and write the one a reader needs: this is the API an application is built against,
+and `@return the value` is the same gap in a longer form.
 
 The *Publish to GitHub Packages* workflow builds and tests every pull request and publishes nothing
 from a branch. A red check is a finding about your change. Read the log and fix it rather than

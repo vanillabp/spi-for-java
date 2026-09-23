@@ -53,9 +53,15 @@ import java.lang.annotation.Target;
 @Documented
 public @interface WorkflowStartedByBpms {
 
+  /**
+   * The default of {@link #id()}: the method is called for every start the BPMS triggers itself.
+   */
   static String ANY_START_EVENT = "";
 
   /**
+   * Which start event this method is interested in. Name one where a process has several of
+   * them and an aggregate built for a timer differs from one built for a signal.
+   *
    * @return The BPMN id of the start event this method serves. Defaults to every
    *         BPMS-initiated start event of the process - which is what a process
    *         with exactly one such start event needs.

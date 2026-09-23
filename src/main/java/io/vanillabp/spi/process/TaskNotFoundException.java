@@ -10,6 +10,13 @@ public class TaskNotFoundException extends RuntimeException {
 
   private static final long serialVersionUID = 1L;
 
+  /**
+   * Reports a task which no configured BPMS knows. A task which is merely completed already is
+   * not reported this way: answering it twice is a logged no-op.
+   *
+   * @param message What the application is told. Name the task id, the adapters which were asked
+   *                and in which order, because that is all the caller gets to see
+   */
   public TaskNotFoundException(
       final String message) {
 

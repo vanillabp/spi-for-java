@@ -21,14 +21,22 @@ import java.lang.annotation.Target;
 public @interface WorkflowService {
 
   /**
+   * The class of the workflow aggregate this service works on. It decides which persistence
+   * VanillaBP loads and saves the aggregate with, and it is the type the methods of this class
+   * take as their aggregate parameter.
+   *
    * @return The workflow-aggregate associated with the annotated service
    */
   Class<?> workflowAggregateClass();
 
   /**
+   * The process this service is wired to, and the only one a workflow is started under. Its
+   * {@link BpmnProcess#version()} is the fallback for every method of this class which names no
+   * version of its own.
+   *
    * @return The process definition id as defined in the BPMN for which the
-   *         annotated service is responsible for. Defaults to the bean name of
-   *         the service. This id is used to start new workflows and
+   *         annotated service is responsible for. Defaults to the simple name of
+   *         the annotated class. This id is used to start new workflows and
    *         correlate messages not related to a dedicated workflow.
    */
   BpmnProcess bpmnProcess() default @BpmnProcess(bpmnProcessId = BpmnProcess.USE_CLASS_NAME);

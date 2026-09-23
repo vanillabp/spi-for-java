@@ -43,9 +43,15 @@ import java.lang.annotation.Target;
 @Documented
 public @interface WorkflowEnded {
 
+  /**
+   * The default of {@link #id()}: the method is called whichever end the workflow took.
+   */
   static String ANY_END_EVENT = "";
 
   /**
+   * Which end event this method is interested in. Name one where a workflow ends in several
+   * places and the outcome is told apart by which end it reached.
+   *
    * @return The BPMN id of the end event this method serves. Defaults to every end
    *         of the workflow, which is what a process ending in one place needs -
    *         and the only thing a BPMS reporting no element id can serve.

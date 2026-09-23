@@ -26,6 +26,10 @@ import java.lang.annotation.Target;
 @Documented
 public @interface TaskEvent {
 
+  /**
+   * The two moments of a task at which a method can be called. A parameter is handed the moment
+   * which actually happened, so it never sees {@link #ALL}.
+   */
   enum Event {
     /**
      * filter to events on creating a task
@@ -41,6 +45,13 @@ public @interface TaskEvent {
     ALL,
   };
 
+  /**
+   * The moments the annotated method is called at. Several {@link TaskEvent} parameters of one
+   * method add up instead of narrowing each other, and a moment nobody asked for is dropped
+   * before the workflow aggregate is even loaded.
+   *
+   * @return The moments to be called at
+   */
   public Event[] value() default {
       Event.ALL
   };

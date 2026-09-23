@@ -17,13 +17,24 @@ import java.lang.annotation.Target;
 @Documented
 public @interface BpmnProcess {
 
+  /**
+   * The default of {@link #version()}: every version of the process the BPMS holds, the ones
+   * deployed after this class was written included.
+   */
   String ALL_VERSIONS = "*";
 
+  /**
+   * The default of {@link #bpmnProcessId()}: the annotation names no process, so the name of the
+   * annotated service decides which one it serves.
+   */
   String USE_CLASS_NAME = "";
 
   /**
+   * Which BPMN process this service serves, named by the {@code id} attribute of the process in
+   * the BPMN file rather than by its name.
+   *
    * @return The process-id as defined in the BPMN for which the annotated service
-   *         is responsible for. Defaults to the bean name of the service.
+   *         is responsible for. Defaults to the simple name of the annotated class.
    */
   String bpmnProcessId() default BpmnProcess.USE_CLASS_NAME;
 
