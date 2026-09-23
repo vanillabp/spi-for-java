@@ -29,14 +29,25 @@ import java.lang.annotation.Target;
 @Repeatable(WorkflowTasks.class)
 public @interface WorkflowTask {
 
+  /**
+   * The default of {@link #id()} and of {@link #taskDefinition()}: the annotation names nothing,
+   * so the model has to carry the name of the annotated method.
+   */
   static String USE_METHOD_NAME = "";
 
   /**
+   * Wires the method by the BPMN id of the element. Use it where a model is given and its task
+   * definitions are not yours to change, since an id is unique within the process anyway.
+   *
    * @return The activity's BPMN id. Defaults to the annotated method's name.
    */
   String id() default USE_METHOD_NAME;
 
   /**
+   * Wires the method by the task definition written into the properties of the BPMN element.
+   * This is the usual way round: a model written alongside the software carries the name of the
+   * method, and a model which was there first is followed by naming its definition here.
+   *
    * @return The task-definition as defined in the BPMN. Defaults to the annotated
    *         method's name.
    */

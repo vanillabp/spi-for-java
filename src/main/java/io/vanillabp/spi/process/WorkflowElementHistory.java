@@ -3,6 +3,12 @@ package io.vanillabp.spi.process;
 import java.time.OffsetDateTime;
 
 /**
+ * One step a workflow took, as part of {@link WorkflowHistory#elementsHistory()}.
+ * <p>
+ * Which steps a BPMS records is up to the BPMS and its configuration. Some keep the activities
+ * only, others every gateway and sequence flow as well, so a viewer colours what it is told about
+ * and leaves the rest as it is.
+ *
  * @param startTime StartTime of the workflow element
  * @param endTime EndTime of the workflow element (if completed or canceled)
  * @param elementId The id of the workflow element

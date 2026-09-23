@@ -79,14 +79,16 @@
                  anybody noticing, and the release is a bad moment to find that out, because
                  that is when the javadoc artifact is built.
                  It breaks on errors, which is a reference javadoc cannot resolve or broken
-                 HTML. It lets warnings pass, which is mostly a missing comment. Those
-                 warnings are older than this binding and cleaning them up is work of its
-                 own.
+                 HTML, and it breaks on warnings too, which is mostly a comment nobody
+                 wrote. Everything in this repository is API an application reads, so a
+                 missing sentence is a gap for its author. The gaps here were written once.
+                 Letting a warning pass again would park the next one in a build which
+                 looks green.
                The release parent switches doclint off and lets errors pass, which is how
                the goal was able to rot unseen. Both are switched back on here. -->
             <doclint>all</doclint>
             <failOnError>true</failOnError>
-            <failOnWarnings>false</failOnWarnings>
+            <failOnWarnings>true</failOnWarnings>
             <!-- no link into the JDK API: that link is fetched over the network, and the
                  check should give the same answer on a machine without one. No link into
                  the javadoc of the other modules either: it is not built at this point,

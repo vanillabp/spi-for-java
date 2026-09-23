@@ -8,6 +8,11 @@ import java.lang.annotation.Inherited;
 import java.lang.annotation.Retention;
 import java.lang.annotation.Target;
 
+/**
+ * Hands the number of iterations of a multi-instance element to a parameter of a
+ * {@link WorkflowTask} method. The parameter is an {@code int} or an {@link Integer}, and it is
+ * -1 where the BPMS does not report a number.
+ */
 @Retention(RUNTIME)
 @Target(PARAMETER)
 @Inherited
@@ -15,8 +20,10 @@ import java.lang.annotation.Target;
 public @interface MultiInstanceTotal {
 
   /**
-   * @return The name of variable/field which holds the current total number of
-   *         the multi-instance iteration.
+   * The BPMN id of the multi-instance element whose iterations are counted. It is the same id
+   * {@link MultiInstanceElement} names, because a task may sit inside several iterations at once.
+   *
+   * @return The BPMN id of the multi-instance element
    */
   String value();
 
