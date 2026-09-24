@@ -1,0 +1,28 @@
+name: Checks
+# The checks a pull request can answer without building anything. The Maven build of this
+# repository is the job 'publish' of deploy-to-github-packages.yaml, and it runs on a pull
+# request too. This workflow runs beside that build and is done long before it.
+"on":
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  # One run of the checks per branch, and the newest run wins. Nobody reads the answer of
+  # a commit which has been pushed over. Cancelling is right here and wrong for the
+  # publish group of deploy-to-github-packages.yaml: a publish carries work which cannot
+  # be repeated, a check can run again any time.
+  group: checks-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  # Javadoc keeps the last block in front of an element and drops every earlier one, and it
+  # says nothing while it does. The script finds such a pair. It needs a checkout and
+  # nothing else, so it answers in seconds, while the Maven build is still running. That is
+  # why the check stands here and not in that build: whoever left a dropped block behind
+  # reads about it right away and not when the build is through.
+  orphaned-javadoc-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: No javadoc block stands in front of another one
+        run: bin/check-orphaned-javadoc.sh
