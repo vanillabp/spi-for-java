@@ -88,6 +88,11 @@ the plugin fails on a warning so that it stays that way. Write the sentence rath
 the check off, and write the one a reader needs: this is the API an application is built against,
 and `@return the value` is the same gap in a longer form.
 
+Two javadoc blocks in a row are the gap neither tool sees. Javadoc keeps the last block before an
+element and drops the earlier ones without a word, so a comment somebody wrote and kept up to date
+appears nowhere. `bin/check-orphaned-javadoc.sh` finds that shape. A block it reports describes
+something, usually the element next door, so hang it back there rather than delete it.
+
 The *Publish to GitHub Packages* workflow builds and tests every pull request and publishes nothing
 from a branch. A red check is a finding about your change. Read the log and fix it rather than
 pushing again to see whether it goes away.
