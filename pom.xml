@@ -5,7 +5,7 @@
   <parent>
     <groupId>io.vanillabp</groupId>
     <artifactId>release-parent</artifactId>
-    <version>1.1.1</version>
+    <version>1.2.1</version>
   </parent>
 
   <artifactId>spi-for-java</artifactId>
@@ -84,8 +84,8 @@
                  missing sentence is a gap for its author. The gaps here were written once.
                  Letting a warning pass again would park the next one in a build which
                  looks green.
-               The release parent switches doclint off and lets errors pass, which is how
-               the goal was able to rot unseen. Both are switched back on here. -->
+               The release parent lets a warning pass, because not every repository which
+               inherits it has written its comments yet. Here a warning is an error. -->
             <doclint>all</doclint>
             <failOnError>true</failOnError>
             <failOnWarnings>true</failOnWarnings>
