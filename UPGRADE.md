@@ -3,7 +3,7 @@
 Contributor-facing list of breaking changes per version line. These entries feed
 the V1→V2 migration guide for VanillaBP users.
 
-## 1.2.0
+## 2.0
 
 ### Removed: message-object overloads of `ProcessService`
 

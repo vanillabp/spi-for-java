@@ -28,6 +28,11 @@ import java.lang.annotation.Target;
  * naming the value and the declared type. Declare the parameter as Object to see
  * the value the way the BPMS sent it. Which pairs convert and which are refused is
  * documented with the platform, in the migration adapter's README.
+ * <p>
+ * A type your BPMS may hand back as something else, and a declaration naming no type
+ * at all such as {@code Object}, are named while the application starts. You then say
+ * once that you know what your BPMS makes of that value
+ * (<code>declared-task-params</code>), and the message shows the key to write.
  */
 @Retention(RUNTIME)
 @Target(ElementType.PARAMETER)

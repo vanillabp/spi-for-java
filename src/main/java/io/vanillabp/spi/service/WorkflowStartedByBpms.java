@@ -16,10 +16,11 @@ import java.lang.annotation.Target;
  * decided, and the aggregate has to come into existence for the workflow to have
  * any data at all.
  * <p>
- * The annotation is OPTIONAL. Without it VanillaBP builds the aggregate itself: it
- * instantiates the class, assigns an ID (a timer's trigger time, otherwise a
- * generated ID) and copies the process variables the BPMN model set into
- * equally-named attributes. Annotate a method to take that over:
+ * The annotation is REQUIRED for a process the BPMS can start itself. VanillaBP does
+ * not build the aggregate: an object which comes into existence without the
+ * application does not carry the application's values, and for a BPMS-initiated start
+ * that would be the very first thing that happens to the workflow. So the application
+ * builds it and returns it:
  *
  * <pre>
  * &#64;WorkflowStartedByBpms
@@ -28,20 +29,23 @@ import java.lang.annotation.Target;
  * }
  * </pre>
  *
- * or to enrich the aggregate VanillaBP built:
- *
- * <pre>
- * &#64;WorkflowStartedByBpms(id = "DailySettlementTimer")
- * public void enrich(final Settlement settlement, &#64;{@link TaskParam}("region") final String region) {
- *   settlement.setRegion(region);
- * }
- * </pre>
- *
- * The method may take the workflow aggregate, a {@link BpmsStartTrigger} and
- * {@link TaskParam} annotated process variables in any order. It runs in the
- * transaction VanillaBP opened for the start; the aggregate is saved afterwards.
- * Throwing means the workflow does not start: the aggregate is rolled back and the
- * BPMS applies its retry semantics.
+ * A process with a timer, signal or conditional start event and no such method ends
+ * the startup of the application, with a message naming the process and showing the
+ * method to write. The check runs while the models are deployed rather than when the
+ * start fires, because a timer at three in the morning is a bad moment to find out.
+ * <p>
+ * The method may take a {@link BpmsStartTrigger} and {@link TaskParam} annotated
+ * process variables in any order, which is the same binding a {@link WorkflowTask}
+ * method has. It runs in the transaction VanillaBP opened for the start, and what it
+ * returns is saved. Throwing means the workflow does not start: nothing is written and
+ * the BPMS applies its retry semantics.
+ * <p>
+ * The ID is the application's choice. A timer brings its trigger time in the
+ * {@link BpmsStartTrigger}, and taking that as the ID is what makes a repeated
+ * notification harmless: the aggregate is found rather than built a second time. A
+ * signal and a condition bring no such value, so an application which wants the same
+ * protection there needs a source of its own; an ID the persistence layer generates is
+ * fine as long as a second workflow is acceptable.
  * <p>
  * What the version range names, why a delivery without a reported version is served only by a
  * method without one, and how a method naming none takes the range of its
