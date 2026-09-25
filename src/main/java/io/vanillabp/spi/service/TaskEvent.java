@@ -29,6 +29,12 @@ public @interface TaskEvent {
   /**
    * The two moments of a task at which a method can be called. A parameter is handed the moment
    * which actually happened, so it never sees {@link #ALL}.
+   * <p>
+   * Where {@link #CANCELED} comes from depends on the BPMS. An engine which fires an event per
+   * element delivers it like any other notification, and a BPMS which can only say that a whole
+   * workflow ended has the cancellation worked out for it: VanillaBP reads the tasks it still
+   * believes are open in that workflow and reports each of them. Either way the application sees
+   * the same moment.
    */
   enum Event {
     /**
