@@ -9,43 +9,37 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.Target;
 
 /**
- * Marks the method building the workflow-aggregate of a workflow the BPMS started
- * on its own: by a timer, a signal or a conditional start event. Unlike every other
- * workflow, nobody called
- * {@link io.vanillabp.spi.process.ProcessService#startWorkflow(Object)} - the engine
- * decided, and the aggregate has to come into existence for the workflow to have
- * any data at all.
+ * Marks the method which builds the workflow aggregate of a workflow that reached this
+ * application without VanillaBP starting it: a timer, signal or conditional start event
+ * fired, or somebody with access to the BPMS started the process directly.
  * <p>
- * The annotation is REQUIRED for a process the BPMS can start itself. VanillaBP does
- * not build the aggregate: an object which comes into existence without the
- * application does not carry the application's values, and for a BPMS-initiated start
- * that would be the very first thing that happens to the workflow. So the application
- * builds it and returns it:
+ * The method NAMES the workflow. The id of a workflow is the id of its workflow
+ * aggregate, the application assigns it, and the BPMS is told about it afterwards:
+ * Camunda 7 keeps it as the business key, Camunda 8 and the Process-Engine-API keep it as
+ * a process variable named after the aggregate's id attribute. So the aggregate this
+ * method returns has to carry its id, unless the persistence layer assigns one on save.
  *
  * <pre>
  * &#64;WorkflowStartedByBpms
- * public Ride buildAggregate(final {@link BpmsStartTrigger} trigger) {
- *   return new Ride(trigger.time());
+ * public Ride buildAggregate(final {@link BpmsStartTrigger} trigger, &#64;{@link TaskParam}("startedAt") final Instant startedAt) {
+ *   return new Ride(UUID.randomUUID().toString(), startedAt);
  * }
  * </pre>
  *
- * A process with a timer, signal or conditional start event and no such method ends
- * the startup of the application, with a message naming the process and showing the
- * method to write. The check runs while the models are deployed rather than when the
- * start fires, because a timer at three in the morning is a bad moment to find out.
+ * The method may take a {@link BpmsStartTrigger} and {@link TaskParam} annotated process
+ * variables in any order, and it returns the workflow aggregate. It runs in the
+ * transaction VanillaBP opened for the start; the aggregate is saved afterwards. Throwing
+ * means the workflow does not start: the aggregate is rolled back and the BPMS applies its
+ * retry semantics.
  * <p>
- * The method may take a {@link BpmsStartTrigger} and {@link TaskParam} annotated
- * process variables in any order, which is the same binding a {@link WorkflowTask}
- * method has. It runs in the transaction VanillaBP opened for the start, and what it
- * returns is saved. Throwing means the workflow does not start: nothing is written and
- * the BPMS applies its retry semantics.
+ * A process nobody ever starts past VanillaBP needs no such method. Where one is started
+ * all the same, the start is refused with a message showing the method to write, and the
+ * BPMS turns that into an incident the way it does for any failing task.
  * <p>
- * The ID is the application's choice. A timer brings its trigger time in the
- * {@link BpmsStartTrigger}, and taking that as the ID is what makes a repeated
- * notification harmless: the aggregate is found rather than built a second time. A
- * signal and a condition bring no such value, so an application which wants the same
- * protection there needs a source of its own; an ID the persistence layer generates is
- * fine as long as a second workflow is acceptable.
+ * A workflow the application started through
+ * {@link io.vanillabp.spi.process.ProcessService#startWorkflow(Object)} never reaches this
+ * method: it already carries its id and its workflow aggregate. Neither does a start event
+ * of an event subprocess, which fires inside a workflow that is already running.
  * <p>
  * What the version range names, why a delivery without a reported version is served only by a
  * method without one, and how a method naming none takes the range of its
@@ -58,7 +52,7 @@ import java.lang.annotation.Target;
 public @interface WorkflowStartedByBpms {
 
   /**
-   * The default of {@link #id()}: the method is called for every start the BPMS triggers itself.
+   * The default of {@link #id()}: the method is called for every start event of the process.
    */
   static String ANY_START_EVENT = "";
 
@@ -66,9 +60,8 @@ public @interface WorkflowStartedByBpms {
    * Which start event this method is interested in. Name one where a process has several of
    * them and an aggregate built for a timer differs from one built for a signal.
    *
-   * @return The BPMN id of the start event this method serves. Defaults to every
-   *         BPMS-initiated start event of the process - which is what a process
-   *         with exactly one such start event needs.
+   * @return The BPMN id of the start event this method serves. Defaults to every start
+   *         event of the process, which is what a process with one start event needs.
    */
   String id() default ANY_START_EVENT;
 
