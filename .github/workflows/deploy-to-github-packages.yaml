@@ -3,8 +3,8 @@ name: Publish to GitHub Packages
 # 'publish', so a pull request Renovate opens gets a result like every other one - it did
 # not while this workflow only listened to pushes and ignored renovate/**.
 #
-# Publishing from main alone is the second half of it: GitHub Packages holds one
-# 1.1.1-SNAPSHOT per module, so every branch used to overwrite what main published, and a
+# Publishing from main alone is the second half of it: GitHub Packages holds one snapshot
+# version per module, so every branch used to overwrite what main published, and a
 # consumer could resolve a set of modules which never existed in any single tree.
 "on":
   pull_request:
