@@ -33,6 +33,18 @@ platform integration, which is what
 [Where the promises on this page are held](./README.md#where-the-promises-on-this-page-are-held)
 says. A change of behaviour is therefore proven over there, in the same change.
 
+## A POM comment says what this POM does
+
+A comment in a POM says what this POM sets and why it differs from what it would get for free. It
+does not repeat what the parent sets. `io.vanillabp:release-parent` is released on its own schedule,
+so a copy of its settings in a child here goes stale without anything noticing. The javadoc
+comments of three POMs in this organisation did exactly that: they said the parent switched the
+javadoc check off, after a release of it had switched the check on.
+
+Where a module really does rely on something its parent does or does not do, say so as an
+assumption and name the version it was checked against. Then the next reader can check it again in
+one command, `mvn help:effective-pom`, instead of believing a sentence.
+
 ## How we write
 
 Most people who read this repository read English as a second language, and so does the maintainer.
