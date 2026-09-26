@@ -174,31 +174,35 @@ processService.startWorkflowByMessage(loanApproval, "LoanRequested");
 
 Only the *name* of the message reaches the BPMS. Whatever the message carried belongs on the aggregate before the call, which is the same rule as for [correlating a message](#correlate-an-incoming-message).
 
-#### Workflows the BPMS starts
+#### Workflows nobody started through VanillaBP
 
-Some processes start without anybody asking: a timer start event fires, a signal start event receives a broadcast, or a conditional start event's condition becomes true. Nobody hands VanillaBP an aggregate then, so your workflow service has to build one:
+Some workflows arrive without anybody asking VanillaBP for them: a timer start event fires, a signal start event receives a broadcast, a conditional start event's condition becomes true, or somebody with access to the BPMS starts the process directly. Nobody hands VanillaBP an aggregate then, so your workflow service has to build one:
 
 ```java
 @WorkflowStartedByBpms
-public NightlyReview buildAggregate(BpmsStartTrigger trigger) {
-     return new NightlyReview(trigger.time());
+public NightlyReview buildAggregate(BpmsStartTrigger trigger, @TaskParam("dueAt") Instant dueAt) {
+     return new NightlyReview(UUID.randomUUID().toString(), dueAt);
 }
 ```
 
-The annotation is required for such a process. VanillaBP does not build the aggregate itself, because an object which comes into existence without your code does not carry your values, and here that would be the first thing that ever happens to the workflow. A process the BPMS can start and no such method ends the startup of your application, with a message naming the process and showing the method to write. You learn it while the models are deployed, not when the timer fires at three in the morning.
+The aggregate you return names the workflow. The id of a workflow is the id of its workflow aggregate and you assign it, here or by letting the persistence layer assign one on save. VanillaBP then tells the BPMS about it: Camunda 7 keeps it as the business key, Camunda 8 and the Process-Engine-API keep it as a process variable named after your aggregate's id attribute.
 
-Where one process has several such start events and the aggregate differs per event, name the event:
+Where one process has several start events and the aggregate differs per event, name the event:
 
 ```java
 @WorkflowStartedByBpms(id = "StartEvent_ScheduledReview")
 public NightlyReview buildScheduledReview(@TaskParam("region") String region) {
-     return new NightlyReview(region);
+     return new NightlyReview(UUID.randomUUID().toString(), region);
 }
 ```
 
-The method may take a `BpmsStartTrigger` and process variables via `@TaskParam`, in any order, which is the binding a `@WorkflowTask` method has. The trigger says which kind of start event fired (`TIMER`, `SIGNAL` or `CONDITIONAL`), when it fired, the name of the signal where it was one, and the BPMN id of the start event. A message start event is not among the kinds, because that one is triggered by the application through `startWorkflowByMessage`, which carries the aggregate.
+The method may take a `BpmsStartTrigger` and process variables via `@TaskParam`, in any order, which is the binding a `@WorkflowTask` method has. The trigger says which kind of start event fired (`NONE`, `MESSAGE`, `TIMER`, `SIGNAL` or `CONDITIONAL`), the name of the signal where it was one, and the BPMN id of the start event.
 
-The ID is yours to choose. Taking a timer's trigger time is what makes a repeated notification harmless: the aggregate is found instead of being built twice. A signal and a condition carry no such value, so bring your own source where a second workflow would be wrong. Whether your BPMS can serve such a start at all is documented in the [adapter platform's wiki](https://github.com/vanillabp/adapter-platform-integration/wiki/Starting-workflows). The blueprint [`bpmn-bpms-initiated-start`](https://github.com/vanillabp-blueprints/bpmn-bpms-initiated-start-springboot) runs it.
+The trigger carries no time. When a start event fired is your own value: put it into the model as an expression, read it as a `@TaskParam` and store it on your aggregate. No BPMS hands a start listener the time it scheduled the start for, so an adapter would have to invent that value.
+
+A process nobody ever starts past VanillaBP needs no such method. Where one is started all the same, VanillaBP refuses that start with a message showing the method to write, and the BPMS turns the refusal into an incident. A workflow you started through `startWorkflow` never reaches the method: it already carries its id and its aggregate.
+
+Whether your BPMS can serve such a start at all is documented in the [adapter platform's wiki](https://github.com/vanillabp/adapter-platform-integration/wiki/Starting-workflows). The blueprint [`bpmn-bpms-initiated-start`](https://github.com/vanillabp-blueprints/bpmn-bpms-initiated-start-springboot) runs it.
 
 ### Wire up a process
 
