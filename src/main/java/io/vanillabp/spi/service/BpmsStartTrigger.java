@@ -7,7 +7,9 @@ package io.vanillabp.spi.service;
  * There is no time in here. The moment a start event fired is the application's own
  * business: model it as a process variable, fill it by an expression in the BPMN model and
  * read it as a <code>&#64;TaskParam</code>. An adapter would have to invent that time,
- * because no BPMS hands a start listener the time it scheduled the start for.
+ * because no BPMS hands a start listener the time it scheduled the start for. Why the
+ * time went and why every kind of start event is in here, is decision 9 in the
+ * repository's DECISIONS.md.
  *
  * @param kind Which kind of start event fired
  * @param signalName The name of the signal for {@link Kind#SIGNAL},

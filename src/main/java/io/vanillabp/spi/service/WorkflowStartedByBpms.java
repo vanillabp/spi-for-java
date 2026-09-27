@@ -18,6 +18,7 @@ import java.lang.annotation.Target;
  * Camunda 7 keeps it as the business key, Camunda 8 and the Process-Engine-API keep it as
  * a process variable named after the aggregate's id attribute. So the aggregate this
  * method returns has to carry its id, unless the persistence layer assigns one on save.
+ * Why the application names the workflow is decision 9 in the repository's DECISIONS.md.
  *
  * <pre>
  * &#64;WorkflowStartedByBpms
