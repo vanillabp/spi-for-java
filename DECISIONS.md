@@ -124,3 +124,33 @@ Which declaration applies is decided by the process a delivery came from, not by
 declares one `bpmnProcess` plus any number of `secondaryBpmnProcesses`, each with a version of its
 own, and one method may serve elements of both.
 See [Versioning of BPMN business-processes](./README.md#versioning-of-bpmn-business-processes).
+
+### 9. The application names the workflow, and the trigger carries no time
+
+The id of a workflow is the id of its workflow aggregate. The application assigns it, in the
+`@WorkflowStartedByBpms` method, and nobody else does. The BPMS holds that id afterwards: Camunda
+7 as the business key, Camunda 8 and the Process-Engine-API as a process variable named after the
+aggregate's id attribute. What this means for the platform is decision 98 of
+`adapter-platform-integration`; what it changes in this API is written down here.
+
+`BpmsStartTrigger` lost its time. The trigger used to carry the moment the start event fired, and
+it existed for one reason: the core turned that moment into the workflow aggregate's id. Now the
+application names the workflow, so that reason is gone, and what is left is a value no BPMS can
+answer honestly. Camunda 7 does not hand a listener the time it scheduled the timer for. Camunda 8
+does not either. Both adapters reported `Instant.now()`, which is the moment the notification was
+processed and not the moment the event fired. A field which every adapter has to fake is worse
+than no field. An application which needs that time models a process variable, fills it by an
+expression in the BPMN model and reads it as a `@TaskParam`. The model is the place which knows
+what "the time" is supposed to mean.
+
+The kinds cover every start event now. `NONE` and `MESSAGE` joined `TIMER`, `SIGNAL` and
+`CONDITIONAL`. The adapters hang their listener on every start event of a process, because what a
+start means is read from the state of the workflow and not from the kind of its event, so a
+foreign start can arrive through a plain start event and the application has to be able to see
+that.
+
+Two other ways were turned down. A `@NaturalIdentity` annotation, and a generic
+`BpmsStartTrigger<I>` which would have carried the name the BPMS holds in the application's own id
+type. Both would make every application name a type for a case almost none of them has. If the
+case ever turns up, an annotation of its own is the smaller cut.
+See [Workflows nobody started through VanillaBP](./README.md#workflows-nobody-started-through-vanillabp).
