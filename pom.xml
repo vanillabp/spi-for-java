@@ -85,6 +85,23 @@
       </plugins>
     </pluginManagement>
     <plugins>
+      <!-- the sources jar every build attaches. The parent binds this plugin in its
+           'release' profile alone, and a snapshot is deployed without that profile, so
+           the snapshots of this repository carried no sources and an IDE showed
+           decompiled code to everyone developing against one. The version and the
+           configuration still come from the parent, only the binding is here. -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-source-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>attach-sources</id>
+            <goals>
+              <goal>jar</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
       <plugin>
         <groupId>com.diffplug.spotless</groupId>
         <artifactId>spotless-maven-plugin</artifactId>
