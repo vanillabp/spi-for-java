@@ -34,6 +34,11 @@ public interface ProcessService<A> {
    * (expressions, conditions) reads data from the workflow aggregate, not
    * from message payloads. Incorporate any data of the incoming message into
    * the workflow aggregate before calling this method.
+   * <p>
+   * The message has to fire a message start event of the process of THIS process service. Where
+   * the adapter knows the model, as on Camunda 7 and Camunda 8, a message which does not start
+   * that process is refused with an {@link IllegalArgumentException}, and nothing is started.
+   * Version 1 started any process which knew the message.
    *
    * @param workflowAggregate The workflow-aggregate
    * @param messageName The message name
