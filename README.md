@@ -1110,7 +1110,7 @@ An implementation of the SPI is called adapter and hides all the details of a pa
 
 Available adapters:
 * [Camunda 7 adapter](https://github.com/camunda-community-hub/vanillabp-camunda7-adapter)
-* [Camunda 8 adapter](https://github.com/vanillabp/camunda8-adapter)
+* [Camunda 8 adapter](https://github.com/camunda-community-hub/vanillabp-camunda8-adapter)
 * [Process-Engine-API adapter](https://github.com/vanillabp/process-engine-api-adapter)
 
 Which adapter serves which BPMS, what to add as a dependency and what each BPMS can and cannot do is listed in the wiki page [BPMS adapters](https://github.com/vanillabp/adapter-platform-integration/wiki/BPMS-adapters). Several adapters may run side by side, which is what [migrating workflows from one BPMS to another](https://github.com/vanillabp/adapter-platform-integration/wiki/BPMS-migration) is built on. It is a matter of configuration and changes nothing about the code on this page, apart from the few places noted above where an API call reaches more than one BPMS.
