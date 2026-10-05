@@ -1109,7 +1109,7 @@ The SPI incorporates various state-of-the-art techniques and concepts to simplif
 An implementation of the SPI is called adapter and hides all the details of a particular workflow system's API. This lets the developer focus on the business aspects rather than technical details.
 
 Available adapters:
-* [Camunda 7 adapter](https://github.com/vanillabp/camunda7-adapter)
+* [Camunda 7 adapter](https://github.com/camunda-community-hub/vanillabp-camunda7-adapter)
 * [Camunda 8 adapter](https://github.com/vanillabp/camunda8-adapter)
 * [Process-Engine-API adapter](https://github.com/vanillabp/process-engine-api-adapter)
 
