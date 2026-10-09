@@ -1,6 +1,6 @@
 name: Checks
 # The checks a pull request can answer without building anything. The Maven build of this
-# repository is the job 'publish' of deploy-to-github-packages.yaml, and it runs on a pull
+# repository is the job 'publish' of publish-snapshots.yaml, and it runs on a pull
 # request too. This workflow runs beside that build and is done long before it.
 "on":
   pull_request:
@@ -10,7 +10,7 @@ permissions:
 concurrency:
   # One run of the checks per branch, and the newest run wins. Nobody reads the answer of
   # a commit which has been pushed over. Cancelling is right here and wrong for the
-  # publish group of deploy-to-github-packages.yaml: a publish carries work which cannot
+  # publish group of publish-snapshots.yaml: a publish carries work which cannot
   # be repeated, a check can run again any time.
   group: checks-${{ github.ref }}
   cancel-in-progress: true
