@@ -43,14 +43,13 @@ platform integration, which is what
 [Where the promises on this page are held](./README.md#where-the-promises-on-this-page-are-held)
 says. A change of behaviour is therefore proven over there, in the same change.
 
-## Snapshots from GitHub Packages
+## Snapshots on Maven Central
 
 This repository needs no snapshot. Its parent and all its dependencies are releases from Maven
-Central. Every push to `main` publishes a snapshot of this repository to
-`https://maven.pkg.github.com/vanillabp/spi-for-java`. The platform and the adapters read it when
-somebody builds one of them alone. [Using the published
-snapshots](https://github.com/vanillabp/development-workspace#using-the-published-snapshots) shows
-the token and the `settings.xml` entries this takes.
+Central. Every push to `main` publishes a snapshot of this repository to the snapshot repository of
+Maven Central, `https://central.sonatype.com/repository/maven-snapshots/`. The platform and the
+adapters read it from there. The parent `io.vanillabp:release-parent` names that repository, and
+reading it needs no login and no token.
 
 ## A POM comment says what this POM does
 
@@ -124,13 +123,13 @@ element and drops the earlier ones without a word, so a comment somebody wrote a
 appears nowhere. `bin/check-orphaned-javadoc.sh` finds that shape. A block it reports describes
 something, usually the element next door, so hang it back there rather than delete it.
 
-The *Publish to GitHub Packages* workflow builds and tests every pull request and publishes nothing
+The *Build and publish snapshots* workflow builds and tests every pull request and publishes nothing
 from a branch. A red check is a finding about your change. Read the log and fix it rather than
 pushing again to see whether it goes away.
 
-A pull request from a fork builds here as usual, because the build needs no snapshot. A maintainer
-approves the first run of the workflows for somebody whose first pull request this is in the
-repository.
+A pull request from a fork builds and tests here like any other. It cannot publish anything, because
+GitHub gives it no secrets. A maintainer approves the first run of the workflows for somebody whose
+first pull request this is in the repository.
 
 `main` carries a ruleset, and it requires two green checks before a merge: `publish`, which is the
 build of that workflow, and `orphaned-javadoc-check`, which is the *Checks* workflow running the
