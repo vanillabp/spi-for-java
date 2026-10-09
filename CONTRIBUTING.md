@@ -12,28 +12,15 @@ with everything pointing at it. [`AGENTS.md`](./AGENTS.md) says how work is done
 [`DECISIONS.md`](./DECISIONS.md) holds the decisions several places rely on, and it is the only
 thing the code is allowed to cite.
 
-## From a bug to a pull request
+## Getting started
 
-Found a bug? You can hand it to a coding agent.
-
-1. Clone [`development-workspace`](https://github.com/vanillabp/development-workspace) with
-   `git clone --recurse-submodules`. It holds the VanillaBP repositories side by side. Its
-   `.claude/skills` folder holds the skills Claude Code reads when it starts at the root of the
-   workspace.
-2. Start your coding agent at the root of the workspace and describe the bug: what you did, what
-   you expected and what happened instead.
-3. The agent builds a scenario which reproduces the bug, looks for the cause and fixes it. Then it
-   pushes a branch to your fork and opens a pull request from there.
-4. The VanillaBP team reviews the pull request and merges it.
-
-You need a GitHub account, the GitHub CLI logged in with `gh auth login`, a fork of the repository
-you change (the agent can create it with `gh repo fork`), and Java 21, Maven and Docker for the
-build. The submodules are cloned over SSH. If GitHub has no SSH key of yours, run
-`git config --global url."https://github.com/".insteadOf "git@github.com:"` before you clone. If
-the bug is in a repository the workspace does not hold, the agent clones it next to the others.
-Before it opens the pull request, the agent follows the `CONTRIBUTING.md` and the `AGENTS.md` of
-the repository it changes, where it has one. The two Camunda adapters live in the Camunda Community
-Hub, which asks you to sign its contributor license agreement on your first pull request there.
+Start from the [development workspace](https://github.com/vanillabp/development-workspace). Clone it
+with `git clone --recurse-submodules`. This repository comes first in the build order and builds on
+no other VanillaBP repository, so you can also clone it alone. The [README of the
+workspace](https://github.com/vanillabp/development-workspace#readme) says how to build the
+repositories in order, and how to open a pull request, with or without the right to push here. It
+also shows how a coding agent can take a bug off your hands. The rest of this file is about this
+repository.
 
 ## Building and testing
 
@@ -55,6 +42,15 @@ when a sentence of the README stops being true. The tests which hold those promi
 platform integration, which is what
 [Where the promises on this page are held](./README.md#where-the-promises-on-this-page-are-held)
 says. A change of behaviour is therefore proven over there, in the same change.
+
+## Snapshots from GitHub Packages
+
+This repository needs no snapshot. Its parent and all its dependencies are releases from Maven
+Central. Every push to `main` publishes a snapshot of this repository to
+`https://maven.pkg.github.com/vanillabp/spi-for-java`. The platform and the adapters read it when
+somebody builds one of them alone. [Using the published
+snapshots](https://github.com/vanillabp/development-workspace#using-the-published-snapshots) shows
+the token and the `settings.xml` entries this takes.
 
 ## A POM comment says what this POM does
 
@@ -131,6 +127,10 @@ something, usually the element next door, so hang it back there rather than dele
 The *Publish to GitHub Packages* workflow builds and tests every pull request and publishes nothing
 from a branch. A red check is a finding about your change. Read the log and fix it rather than
 pushing again to see whether it goes away.
+
+A pull request from a fork builds here as usual, because the build needs no snapshot. A maintainer
+approves the first run of the workflows for somebody whose first pull request this is in the
+repository.
 
 `main` carries a ruleset, and it requires two green checks before a merge: `publish`, which is the
 build of that workflow, and `orphaned-javadoc-check`, which is the *Checks* workflow running the
