@@ -34,7 +34,7 @@
   <scm>
     <connection>scm:git:https://github.com/vanillabp/spi-for-java.git</connection>
     <developerConnection>scm:git:https://github.com/vanillabp/spi-for-java.git</developerConnection>
-    <url>http://github.com/vanillabp/spi-for-java/tree/main</url>
+    <url>https://github.com/vanillabp/spi-for-java/tree/main</url>
   </scm>
 
   <properties>
