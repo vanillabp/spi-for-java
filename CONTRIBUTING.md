@@ -107,6 +107,10 @@ decision number you used while you were writing, and once a pull request is merg
 bin/check-decision-numbers.sh
 ```
 
+After you corrected a number, `bin/check-decision-citations.sh` says whether every citation of a
+decision still points at an entry of `DECISIONS.md`. The *Checks* workflow runs it on every pull
+request.
+
 Two tools read the javadoc, and each one sees a part the other misses. The compiler checks every
 class for a broken reference or broken HTML, the package private ones included. The javadoc plugin
 checks what the published documentation shows, so it starts at protected and stops there. One thing
