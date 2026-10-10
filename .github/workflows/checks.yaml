@@ -26,3 +26,22 @@ jobs:
       - uses: actions/checkout@v7
       - name: No javadoc block stands in front of another one
         run: bin/check-orphaned-javadoc.sh
+
+  # A citation of a decision is a promise that the decision is there to read. It breaks
+  # without a word: a pending decision gets its number and its file goes away, or a citation
+  # names a number nobody handed out. It also breaks the other way round, when a pending
+  # decision is cited by its number instead of by its file, because the search which runs at
+  # the numbering then walks past it. Two such citations lived in the tree of
+  # adapter-platform-integration for weeks, and the script comes from there.
+  #
+  # Like the check above this needs a checkout and nothing else, so it answers in seconds.
+  # The self test runs first: the script joins wrapped lines, and that is the part of it
+  # which a line-by-line search cannot do, so it is the part worth holding.
+  decision-citation-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: The citation check still finds a wrapped citation
+        run: bin/check-decision-citations.sh --self-test
+      - name: Every citation of a decision points at something which exists
+        run: bin/check-decision-citations.sh
