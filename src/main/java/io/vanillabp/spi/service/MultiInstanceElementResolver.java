@@ -6,9 +6,9 @@ import java.util.Map;
 /**
  * Builds one value out of every multi-instance iteration a task runs in.
  * <p>
- * A task nested in several multi-instance elements is what this exists for. Instead of three
- * parameters per level, the method takes the value built here, and the next task in the same
- * nesting takes the same one. An implementation is a bean of the application, named by
+ * This is for a task inside several multi-instance elements. The method does not need three
+ * parameters per level. It takes the value built here, and the next task at the same place
+ * takes the same value. An implementation is a bean of the application, named by
  * {@link MultiInstanceElement#resolverBean()}.
  *
  * @param <A> The workflow aggregate the resolver may read
@@ -23,8 +23,8 @@ public interface MultiInstanceElementResolver<A, T> {
    */
   interface MultiInstance<E> {
     /**
-     * The item of this iteration. It is null where the model names no item, which is what an
-     * iteration driven by a cardinality looks like.
+     * The item of this iteration. It is null if the model names no item. That is the case for an
+     * iteration driven by a cardinality, which only says how often to repeat.
      *
      * @return The item this iteration works on
      */
@@ -46,24 +46,24 @@ public interface MultiInstanceElementResolver<A, T> {
   }
 
   /**
-   * The multi-instance elements this resolver wants to be handed. VanillaBP reads them while the
-   * application starts, so a model which hands out no item at one of them is reported then rather
-   * than at the first workflow.
+   * The multi-instance elements this resolver wants to get. VanillaBP reads them while the
+   * application starts. So if a model has no item at one of them, this is reported at startup,
+   * not at the first workflow.
    *
    * @return The BPMN ids of the multi-instance elements
    */
   Collection<String> getNames();
 
   /**
-   * Determines an object passed as a {@link WorkflowTask} annotated method's
-   * parameter annotated by {@link MultiInstanceElement} having an attribute
-   * {@link MultiInstanceElement#resolverBean()} set.
+   * Builds the value for a parameter of a {@link WorkflowTask} method. The parameter
+   * is annotated with {@link MultiInstanceElement}, and its
+   * {@link MultiInstanceElement#resolverBean()} is set.
    * 
    * @param workflowAggregate The current workflow's aggregate
-   * @param multiInstances a sorted map of all context-information for all active
-   *                       multi-instance executions. Key is the name of the
-   *                       multi-instance element. The order is from most-out to
-   *                       most-inner execution.
+   * @param multiInstances A sorted map with the context of every active
+   *                       multi-instance execution. The key is the name of the
+   *                       multi-instance element. The order goes from the
+   *                       outermost to the innermost execution.
    * @return A value which will be passed as a parameter
    */
   T resolve(

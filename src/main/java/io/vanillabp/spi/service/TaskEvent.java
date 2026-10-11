@@ -9,8 +9,8 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.Target;
 
 /**
- * This annotation is used to define a parameter for processing a particular
- * task event.
+ * Marks the parameter which receives the event of a task, for example that it was
+ * created or canceled.
  * 
  * <pre>
  * &#64;WorkflowTask(taskDefinition = "myFormKey")
@@ -27,34 +27,34 @@ import java.lang.annotation.Target;
 public @interface TaskEvent {
 
   /**
-   * The two moments of a task at which a method can be called. A parameter is handed the moment
-   * which actually happened, so it never sees {@link #ALL}.
+   * The two moments of a task at which a method can be called. A parameter gets the moment which
+   * really happened, so it never sees {@link #ALL}.
    * <p>
    * Where {@link #CANCELED} comes from depends on the BPMS. An engine which fires an event per
-   * element delivers it like any other notification, and a BPMS which can only say that a whole
-   * workflow ended has the cancellation worked out for it: VanillaBP reads the tasks it still
-   * believes are open in that workflow and reports each of them. Either way the application sees
-   * the same moment.
+   * element delivers it like any other notification. Some BPMS can only say that a whole workflow
+   * ended. For them VanillaBP works the cancellation out: it reads the tasks of that workflow which
+   * it still thinks are open, and reports each of them. Either way the application sees the same
+   * moment.
    */
   enum Event {
     /**
-     * filter to events on creating a task
+     * Only the event of a task being created
      */
     CREATED,
     /**
-     * filter to events on canceling a user task or an asynchronous task (e.g. due to boundary event)
+     * Only the event of a user task or an asynchronous task being canceled (e.g. by a boundary event)
      */
     CANCELED,
     /**
-     * no filtering
+     * Every event, nothing is filtered
      */
     ALL,
   };
 
   /**
-   * The moments the annotated method is called at. Several {@link TaskEvent} parameters of one
-   * method add up instead of narrowing each other, and a moment nobody asked for is dropped
-   * before the workflow aggregate is even loaded.
+   * The moments at which the annotated method is called. If one method has several
+   * {@link TaskEvent} parameters, their moments add up. They do not narrow each other. A moment
+   * nobody asked for is dropped before the workflow aggregate is even loaded.
    *
    * @return The moments to be called at
    */

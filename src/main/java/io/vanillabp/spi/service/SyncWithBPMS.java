@@ -9,9 +9,9 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.Target;
 
 /**
- * Marks a workflow aggregate, one of its attributes or an intention-revealing
- * getter as <b>shared with the BPMS</b>: its value is available to the BPMN model
- * (e.g. for gateway conditions).
+ * Marks a workflow aggregate, one of its attributes or a getter whose name says
+ * what it means as <b>shared with the BPMS</b>. The BPMN model can then use its
+ * value (e.g. in gateway conditions).
  *
  * <pre>
  * &#64;NoSyncWithBPMS               // nothing is shared by default ...
@@ -25,29 +25,29 @@ import java.lang.annotation.Target;
  * }
  * </pre>
  *
- * <b>Inheritance:</b> an attribute which is annotated neither way inherits the
- * behavior of its owner - the aggregate class, respectively the attribute it
- * belongs to (nested objects and collection elements included). The outermost
- * default belongs to the BPMS adapter, and every VanillaBP adapter shares
- * everything: an aggregate carrying no annotation at all reaches its model
- * completely, on an embedded engine as well as on a remote one. A model may
- * therefore read the same attributes wherever it runs, which is the reason the
- * default is not the adapter's taste.
+ * <b>Inheritance:</b> an attribute without either annotation behaves like its
+ * owner. The owner is the aggregate class, or the attribute it belongs to (nested
+ * objects and collection elements included). The outermost default belongs to the
+ * BPMS adapter, and every VanillaBP adapter shares everything. So an aggregate
+ * without any annotation reaches its model completely, on an embedded engine as
+ * well as on a remote one. A model can read the same attributes wherever it runs.
+ * That is why the default is not left to each adapter.
  * <p>
- * <b>What sharing means</b> is the same everywhere, too: the values are written as
- * process variables whenever VanillaBP talks to the BPMS on behalf of the workflow,
- * and the BPMS evaluates its models against those variables. An embedded engine
- * could reach into the application instead, and Camunda 7 did until it turned out
- * that a model written that way breaks on every remote BPMS.
+ * <b>What sharing means</b> is the same everywhere, too. VanillaBP writes the values
+ * as process variables whenever it talks to the BPMS for the workflow, and the BPMS
+ * evaluates its models against those variables. An embedded engine could reach into
+ * the application instead. Camunda 7 did that, until it turned out that a model
+ * written that way breaks on every remote BPMS.
  * <p>
- * <b>An aggregate which shares everything has to say so.</b> Sharing everything is where an
- * application lands by annotating nothing, so the platform integration does not start such a
- * workflow silently. Either the aggregate says what its models need, which is the recommendation,
- * or the workflow allows the full sync in the configuration
+ * <b>An aggregate which shares everything has to say so.</b> An application which annotates
+ * nothing shares everything, so the platform integration does not start such a workflow
+ * silently. Either the aggregate says what its models need, which we recommend. Or the workflow
+ * allows the full sync in the configuration
  * (<code>vanillabp.workflow-modules.&lt;module&gt;.workflows.&lt;process&gt;.allow-full-sync-with-bpms</code>).
  * <p>
- * Why what a BPMS gets to see is declared rather than derived, and what that has to do with running
- * the same model on another BPMS, is decision 3 in the repository's DECISIONS.md.
+ * See decision 3 in the repository's DECISIONS.md. It says why you declare what a BPMS gets to
+ * see, instead of VanillaBP working it out. It also says what this has to do with running the
+ * same model on another BPMS.
  *
  * @see NoSyncWithBPMS
  */
