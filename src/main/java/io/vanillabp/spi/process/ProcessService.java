@@ -7,10 +7,10 @@ import io.vanillabp.spi.service.TaskId;
 
 /**
  * <p>
- * Two promises of this interface are written down where several places rely on them: a workflow is
- * addressed by the id attribute of its aggregate rather than by a technical key (decision 2 in the
- * repository's DECISIONS.md), and a broadcast signal reaches the workflow module of THIS service
- * and no other (decision 6 in the repository's DECISIONS.md).
+ * Two promises of this interface are written down in the decision log, because several places
+ * rely on them. A workflow is addressed by the id attribute of its aggregate, not by a technical
+ * key (decision 2 in the repository's DECISIONS.md). And a broadcast signal reaches the workflow
+ * module of THIS service and no other (decision 6 in the repository's DECISIONS.md).
  *
  * @param <A> The workflow-aggregate-class
  */
@@ -29,16 +29,16 @@ public interface ProcessService<A> {
   /**
    * Starts a new workflow by message start event.
    * <p>
-   * The message's content is <i>never</i> transmitted to the BPMS: the
-   * workflow aggregate is the single source of truth. BPMN logic
-   * (expressions, conditions) reads data from the workflow aggregate, not
-   * from message payloads. Incorporate any data of the incoming message into
-   * the workflow aggregate before calling this method.
+   * The content of the message is <i>never</i> sent to the BPMS. The workflow
+   * aggregate is the single source of truth. BPMN logic (expressions,
+   * conditions) reads data from the workflow aggregate, not from message
+   * payloads. Copy any data of the incoming message into the workflow
+   * aggregate before you call this method.
    * <p>
-   * The message has to fire a message start event of the process of THIS process service. Where
-   * the adapter knows the model, as on Camunda 7 and Camunda 8, a message which does not start
-   * that process is refused with an {@link IllegalArgumentException}, and nothing is started.
-   * Version 1 started any process which knew the message.
+   * The message has to fire a message start event of the process of THIS process service. Some
+   * adapters know the model, for example on Camunda 7 and Camunda 8. There a message which does
+   * not start that process is refused with an {@link IllegalArgumentException}, and nothing is
+   * started. Version 1 started any process which knew the message.
    *
    * @param workflowAggregate The workflow-aggregate
    * @param messageName The message name
@@ -54,21 +54,21 @@ public interface ProcessService<A> {
 
   /**
    * Tells the BPMS that the workflow-aggregate changed, so it sees the current
-   * state before the next thing it evaluates.
+   * state before it evaluates anything next.
    * <p>
-   * VanillaBP pushes the aggregate at the sync points it knows anyway (starting a
-   * workflow, completing a task, correlating a message). Between them the BPMS
-   * still holds the state of the last push - which matters when a conditional
-   * event waits for exactly this change, or when a gateway is evaluated before the
-   * next task of yours runs.
+   * VanillaBP pushes the aggregate at the points where it talks to the BPMS anyway:
+   * when a workflow starts, when a task is completed and when a message is
+   * correlated. Between these points the BPMS still holds the state of the last
+   * push. That matters when a conditional event waits for exactly this change, or
+   * when a gateway is evaluated before your next task runs.
    * <p>
-   * WHAT is pushed is not decided here: it is the part of the aggregate shared with
-   * the BPMS ({@link io.vanillabp.spi.service.SyncWithBPMS} /
-   * {@link io.vanillabp.spi.service.NoSyncWithBPMS}). This method names no
-   * variables - the aggregate stays the single source of truth.
+   * This method does not decide WHAT is pushed. That is the part of the aggregate
+   * shared with the BPMS ({@link io.vanillabp.spi.service.SyncWithBPMS} /
+   * {@link io.vanillabp.spi.service.NoSyncWithBPMS}). The method names no
+   * variables, so the aggregate stays the single source of truth.
    * <p>
-   * What a BPMS DOES with the new values is its own business: Camunda 7 re-evaluates
-   * the conditions of waiting conditional events, other systems simply hold the
+   * What a BPMS DOES with the new values is up to the BPMS. Camunda 7 evaluates the
+   * conditions of waiting conditional events again. Other systems just keep the
    * values until something reads them.
    *
    * @param workflowAggregate The workflow-aggregate
@@ -82,25 +82,26 @@ public interface ProcessService<A> {
   }
 
   /**
-   * Tells the BPMS that the workflow-aggregate changed, pushing the shared values
-   * into the scope the given task RUNS IN instead of the workflow's global scope.
+   * Tells the BPMS that the workflow-aggregate changed. The shared values go into
+   * the scope the given task RUNS IN, not into the global scope of the workflow.
    * <p>
-   * That scope is the process, an embedded subprocess, or the one iteration of a
-   * multi-instance embedded subprocess the task belongs to - what the rest of that
-   * scope evaluates, and what an event subprocess with a conditional start event
-   * listens on. Deliberately NOT the task's own context: values written there would
-   * serve a boundary event of that task and nothing else, and they disappear with the
-   * task.
+   * That scope is the one the task belongs to: the process, an embedded subprocess,
+   * or one iteration of a multi-instance embedded subprocess. The rest of that scope
+   * evaluates these values, and an event subprocess with a conditional start event
+   * listens on them. The task's own context is NOT used, on purpose. Values written
+   * there would serve a boundary event of that task and nothing else, and they are
+   * gone when the task is gone.
    * <p>
-   * This is what multi-instance work needs: every iteration has a scope of its own,
-   * and a workflow-wide write would be a lost update between the iterations.
+   * Multi-instance work needs this. Every iteration has a scope of its own, and a
+   * write for the whole workflow would let one iteration overwrite the values of
+   * another.
    * <p>
-   * <b>It does not additionally write the global scope.</b> A value written in an
-   * inner scope shadows the global one there anyway, and writing both would change
-   * what the OTHER iterations see - which is the one thing multi-instance code must
-   * not do by accident. The consequence is worth knowing: the workflow-global values
-   * stay as they were, so a gateway AFTER the multi-instance evaluates the older
-   * state unless you call {@link #aggregateChanged(Object)} as well.
+   * <b>It does not write the global scope as well.</b> A value written in an inner
+   * scope hides the global one there anyway. Writing both would change what the
+   * OTHER iterations see, and multi-instance code must never do that by accident.
+   * Keep the result in mind: the global values of the workflow stay as they were.
+   * So a gateway AFTER the multi-instance sees the older state, unless you call
+   * {@link #aggregateChanged(Object)} as well.
    *
    * @param workflowAggregate The workflow-aggregate
    * @param taskId The task-id reported previously
@@ -118,38 +119,37 @@ public interface ProcessService<A> {
   /**
    * Broadcasts a BPMN signal.
    * <p>
-   * A signal is a broadcast by definition: every element waiting for it reacts,
-   * and processes having a signal start event are started. It is therefore NOT
-   * addressed to one workflow - unlike
-   * {@link #correlateMessage(Object, String)}, this method takes no workflow
-   * aggregate, and there is no way to limit a signal to a single workflow (the
-   * BPMS which can do that is the exception, not the rule).
+   * A signal is a broadcast by definition. Every element waiting for it reacts,
+   * and processes with a signal start event are started. So it is NOT addressed
+   * to one workflow. Unlike {@link #correlateMessage(Object, String)}, this method
+   * takes no workflow aggregate, and there is no way to limit a signal to a single
+   * workflow. A BPMS which can do that is the exception, not the rule.
    * <p>
-   * <b>The broadcast is scoped to the WORKFLOW MODULE of this service.</b> It
-   * reaches every BPMS the module is deployed to - which is what keeps a broadcast
-   * complete while workflows are being migrated from one BPMS to another - and
-   * every process of the module waiting for that signal. An application wanting a
-   * signal in several modules sends it through the {@code ProcessService} of each of
-   * them; VanillaBP does not decide that for you, because which modules are meant is
-   * a business question.
+   * <b>The broadcast is limited to the WORKFLOW MODULE of this service.</b> It
+   * reaches every BPMS the module is deployed to. That keeps a broadcast complete
+   * while workflows move from one BPMS to another. It also reaches every process of
+   * the module which waits for that signal. If an application wants a signal in
+   * several modules, it sends it through the {@code ProcessService} of each of them.
+   * VanillaBP does not decide that for you, because which modules are meant is a
+   * business question.
    * <p>
-   * How far the signal stays inside that module is what the module's
-   * name-clash-avoidance mode decides. A tenant or a prefixed signal name keeps it
-   * there; the mode {@code none} scopes nothing, so the signal reaches every
-   * subscription of that BPMS carrying the same name, whichever module it belongs to.
-   * That is the price of the mode rather than a property of signals, and the reason
-   * VanillaBP asks for a decision at startup where a module runs unscoped.
+   * The name-clash-avoidance mode of the module decides whether the signal really
+   * stays inside that module. A tenant or a prefixed signal name keeps it there. The mode
+   * {@code none} limits nothing, so the signal reaches every subscription of that
+   * BPMS with the same name, whichever module it belongs to. That is the price of
+   * this mode, not a property of signals. It is also the reason why VanillaBP asks
+   * for a decision at startup if a module runs without a limit.
    * <p>
-   * Pass the signal name as it is modelled; VanillaBP applies whatever name
-   * scoping the workflow module uses, and the BPMS is addressed with the tenant
-   * and the client configured for the adapter it belongs to.
+   * Pass the signal name as it is written in the model. VanillaBP adds whatever
+   * name scoping the workflow module uses. It talks to the BPMS with the tenant and
+   * the client configured for the adapter the module belongs to.
    * <p>
-   * No payload travels with the signal: like a message, a signal transports its
-   * name and nothing else - the workflow aggregate is the single source of truth.
+   * No payload travels with the signal. Like a message, a signal carries its name
+   * and nothing else, because the workflow aggregate is the single source of truth.
    * <p>
    * <b>A signal is not buffered.</b> It reaches whoever waits for it at that very
-   * moment; a workflow arriving at its catch event a moment later gets nothing.
-   * Where a delivery has to wait for its recipient, correlate a message to that
+   * moment. A workflow which reaches its catch event a moment later gets nothing.
+   * If a delivery has to wait for its recipient, correlate a message to that
    * workflow instead.
    *
    * @param signalName The BPMN signal name
@@ -161,14 +161,14 @@ public interface ProcessService<A> {
   }
 
   /**
-   * Correlate a message for the workflow-aggregate's workflow or its sub-workflows
-   * (call-activities).
+   * Correlates a message to the workflow of the workflow-aggregate, or to one of its
+   * sub-workflows (call activities).
    * <p>
-   * The message's content is <i>never</i> transmitted to the BPMS: the
-   * workflow aggregate is the single source of truth. BPMN logic
-   * (expressions, conditions) reads data from the workflow aggregate, not
-   * from message payloads. Incorporate any data of the incoming message into
-   * the workflow aggregate before calling this method.
+   * The content of the message is <i>never</i> sent to the BPMS. The workflow
+   * aggregate is the single source of truth. BPMN logic (expressions,
+   * conditions) reads data from the workflow aggregate, not from message
+   * payloads. Copy any data of the incoming message into the workflow
+   * aggregate before you call this method.
    *
    * @param workflowAggregate The workflow-aggregate
    * @param messageName  The message name to be correlated
@@ -180,14 +180,14 @@ public interface ProcessService<A> {
       String messageName);
 
   /**
-   * Correlate a message for the workflow-aggregate's workflow or its sub-workflows
-   * (call-activities).
+   * Correlates a message to the workflow of the workflow-aggregate, or to one of its
+   * sub-workflows (call activities).
    * <p>
-   * The message's content is <i>never</i> transmitted to the BPMS: the
-   * workflow aggregate is the single source of truth. BPMN logic
-   * (expressions, conditions) reads data from the workflow aggregate, not
-   * from message payloads. Incorporate any data of the incoming message into
-   * the workflow aggregate before calling this method.
+   * The content of the message is <i>never</i> sent to the BPMS. The workflow
+   * aggregate is the single source of truth. BPMN logic (expressions,
+   * conditions) reads data from the workflow aggregate, not from message
+   * payloads. Copy any data of the incoming message into the workflow
+   * aggregate before you call this method.
    *
    * @param workflowAggregate  The workflow-aggregate
    * @param messageName   The message name to be correlated
@@ -201,7 +201,7 @@ public interface ProcessService<A> {
       String correlationId);
 
   /**
-   * Complete a user-task
+   * Completes a user task.
    *
    * @param workflowAggregate The workflow-aggregate
    * @param taskId       The task-id reported previously
@@ -214,12 +214,12 @@ public interface ProcessService<A> {
       String taskId);
 
   /**
-   * Complete a user-task by sending a BPMN error
+   * Ends a user task by sending a BPMN error.
    *
    * @param workflowAggregate  The workflow-aggregate
    * @param taskId        The task-id reported previously
-   * @param bpmnErrorCode The error code which can be caught in BPMN by error
-   *                      boundary events
+   * @param bpmnErrorCode The error code. An error boundary event in the BPMN model
+   *                      can catch it
    * @return The persisted workflow-aggregate, attached where the persistence layer
    *         works that way (e.g. JPA)
    * @see TaskId
@@ -230,7 +230,7 @@ public interface ProcessService<A> {
       String bpmnErrorCode);
 
   /**
-   * Complete an asynchronous task
+   * Completes an asynchronous task.
    *
    * @param workflowAggregate The workflow-aggregate
    * @param taskId            The task-id reported previously
@@ -243,12 +243,12 @@ public interface ProcessService<A> {
       String taskId);
 
   /**
-   * Complete an asynchronous task by sending a BPMN error
+   * Ends an asynchronous task by sending a BPMN error.
    *
    * @param workflowAggregate  The workflow-aggregate
    * @param taskId        The task-id reported previously
-   * @param bpmnErrorCode The error code which can be caught in BPMN by error
-   *                      boundary events
+   * @param bpmnErrorCode The error code. An error boundary event in the BPMN model
+   *                      can catch it
    * @return The persisted workflow-aggregate, attached where the persistence layer
    *         works that way (e.g. JPA)
    * @see TaskId
@@ -259,22 +259,22 @@ public interface ProcessService<A> {
       String bpmnErrorCode);
 
   /**
-   * The <a href="https://github.com/vanillabp/adapter-platform-integration/wiki/Workflow-modules" target="_blank">workflow-module</a>
-   * ID this process service belongs to.
+   * The ID of the <a href="https://github.com/vanillabp/adapter-platform-integration/wiki/Workflow-modules" target="_blank">workflow-module</a>
+   * this process service belongs to.
    *
    * @return The workflow-module ID
    */
   String getWorkflowModuleId();
 
   /**
-   * Get all process definitions of workflows affected by this service.
+   * Returns all process definitions of the workflow of the given aggregate.
    *
    * @param workflowAggregate The workflow-aggregate for which to get the process definitions
-   * @param historyContext Null for the primary process of the workflow or a value from
+   * @param historyContext Null for the primary process of the workflow. For a secondary
+   *                       process of the workflow (a call activity), a value from
    *                       {@link WorkflowElementHistory#secondaryWorkflowHistoryContext()}
-   *                       for secondary processes of the workflow (call activities)
    * @return The process definitions
-   * @throws WorkflowNotFoundException If the workflow-aggregate is not associated with a workflow
+   * @throws WorkflowNotFoundException If no workflow belongs to the workflow-aggregate
    */
   default List<ProcessDefinition> getProcessDefinitions(
       A workflowAggregate,
@@ -284,7 +284,7 @@ public interface ProcessService<A> {
   }
 
   /**
-   * Get the BPMN XML for a process definition.
+   * Returns the BPMN XML of a process definition.
    *
    * @param processDefinitionId The process definition id
    * @return The BPMN XML as an input stream
@@ -297,14 +297,14 @@ public interface ProcessService<A> {
   }
 
   /**
-   * Get the workflow history for the workflow associated with the given aggregate.
+   * Returns the history of the workflow which belongs to the given aggregate.
    *
    * @param workflowAggregate The workflow-aggregate for which to get the history
-   * @param historyContext Null for the primary process of the workflow or a value from
+   * @param historyContext Null for the primary process of the workflow. For a secondary
+   *                       process of the workflow (a call activity), a value from
    *                       {@link WorkflowElementHistory#secondaryWorkflowHistoryContext()}
-   *                       for secondary processes of the workflow (call activities)
    * @return The workflow history
-   * @throws WorkflowNotFoundException If the workflow-aggregate is not associated with a workflow
+   * @throws WorkflowNotFoundException If no workflow belongs to the workflow-aggregate
    */
   default WorkflowHistory getWorkflowHistory(
       A workflowAggregate,

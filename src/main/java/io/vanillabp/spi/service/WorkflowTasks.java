@@ -10,10 +10,10 @@ import java.lang.annotation.Target;
 
 /**
  * Collects the {@link WorkflowTask} annotations of a method which serves more than one BPMN
- * element, for example the same piece of work modelled at two places of a process.
+ * element. An example is the same piece of work, modelled at two places of a process.
  * <p>
  * Java needs a container like this for a repeatable annotation. Write {@link WorkflowTask} as
- * often as needed and leave this one to the compiler.
+ * often as you need it, and leave this one to the compiler.
  *
  * @see WorkflowTask
  */

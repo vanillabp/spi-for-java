@@ -10,9 +10,9 @@ import java.lang.annotation.Target;
 
 /**
  * Marks a workflow aggregate, one of its attributes or a getter as <b>NOT shared
- * with the BPMS</b> - the counterpart of {@link SyncWithBPMS}. Use it to keep
- * secrets, large blobs or anything the BPMN model has no business knowing out of
- * the BPMS:
+ * with the BPMS</b>. It is the counterpart of {@link SyncWithBPMS}. Use it to keep
+ * secrets, large blobs and anything else the BPMN model does not need out of the
+ * BPMS:
  *
  * <pre>
  * public class Order {
@@ -23,17 +23,17 @@ import java.lang.annotation.Target;
  * }
  * </pre>
  *
- * <b>Inheritance:</b> like {@link SyncWithBPMS} the annotation applies to the
- * annotated element AND everything below it (a nested object's attributes, a
- * collection's elements) until an inner element says otherwise.
+ * <b>Inheritance:</b> like {@link SyncWithBPMS}, the annotation applies to the
+ * annotated element AND to everything below it (the attributes of a nested object,
+ * the elements of a collection), until an inner element says otherwise.
  * <p>
- * One of these annotations is what an aggregate needs to be started at all where it would
- * otherwise share everything: a workflow whose aggregate keeps nothing back does not start unless
- * its configuration allows the full sync
+ * An aggregate which would otherwise share everything needs one of these annotations to be
+ * started at all. A workflow whose aggregate keeps nothing back does not start, unless its
+ * configuration allows the full sync
  * (<code>vanillabp.workflow-modules.&lt;module&gt;.workflows.&lt;process&gt;.allow-full-sync-with-bpms</code>).
  * <p>
- * Why what a BPMS gets to see is declared rather than derived is decision 3 in the repository's
- * DECISIONS.md.
+ * Decision 3 in the repository's DECISIONS.md says why you declare what a BPMS gets to see,
+ * instead of VanillaBP working it out.
  *
  * @see SyncWithBPMS
  */

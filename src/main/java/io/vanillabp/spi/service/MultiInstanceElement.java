@@ -9,14 +9,14 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.Target;
 
 /**
- * Hands the item of a multi-instance iteration to a parameter of a {@link WorkflowTask} method.
+ * Passes the item of a multi-instance iteration to a parameter of a {@link WorkflowTask} method.
  * <p>
- * A task may sit inside more than one iteration at a time, which is why {@link #value()} names the
- * BPMN id of the element it asks about. Where that becomes noise, name a {@link #resolverBean()}
- * instead and let it build one value out of all the levels.
+ * A task may be inside more than one iteration at a time. So {@link #value()} names the BPMN id of
+ * the element it asks about. If that gets too much, name a {@link #resolverBean()} instead, and let
+ * it build one value out of all the levels.
  * <p>
- * Exactly one of the two belongs here. Naming both, or naming neither, stops the application from
- * starting, with a message pointing at the parameter.
+ * Set exactly one of the two. If you set both or neither, the application does not start, and the
+ * message points at the parameter.
  */
 @Retention(RUNTIME)
 @Target(PARAMETER)
@@ -26,21 +26,21 @@ public @interface MultiInstanceElement {
 
   /**
    * The default of {@link #value()}: no element is named here, so a {@link #resolverBean()} has
-   * to be.
+   * to be named.
    */
   String USE_RESOLVER = "";
 
   /**
-   * The BPMN id of the multi-instance element whose item is wanted. An id which the BPMS did not
-   * report for this task ends the task with a message listing the ids it did report.
+   * The BPMN id of the multi-instance element whose item you want. If the BPMS did not report this
+   * id for the task, the task ends with a message which lists the ids it did report.
    *
    * @return The BPMN id of the multi-instance element
    */
   String value() default USE_RESOLVER;
 
   /**
-   * A bean building the value out of every iteration the task runs in. It is looked up when the
-   * task runs, not while the application starts.
+   * A bean which builds the value out of every iteration the task runs in. VanillaBP looks it up
+   * when the task runs, not while the application starts.
    *
    * @return The resolver to ask, {@link NoResolver} where an element is named instead
    */

@@ -11,10 +11,9 @@ import java.lang.annotation.Target;
 import io.vanillabp.spi.process.ProcessService;
 
 /**
- * This annotation is used to define a parameter which will be used to hand-over
- * the task's id. This id is used to complete the task asynchronously. If this
- * task cannot be completed asynchronously due to the BPMS' underlying implementation
- * the value of the parameter will be null.
+ * Marks the parameter which receives the id of the task. With this id the task is
+ * completed later, asynchronously. If the BPMS cannot complete this task
+ * asynchronously, the value of the parameter is null.
  * 
  * <pre>
  * &#64;WorkflowTask(taskDefinition = "myFormKey")
@@ -24,16 +23,16 @@ import io.vanillabp.spi.process.ProcessService;
  *     ...
  * </pre>
  * 
- * <i>Hint:</i> If this annotation is found on a parameter then the task is not
- * completed automatically after processing the workflow-task method. It has to
- * be completed by calling
+ * <i>Hint:</i> If a parameter has this annotation, the task is not completed
+ * automatically when the workflow-task method returns. You complete it by calling
  * {@link ProcessService#completeUserTask(Object, String)} or
  * {@link ProcessService#cancelUserTask(Object, String, String)} for user-tasks
  * or {@link ProcessService#completeTask(Object, String)} or
  * {@link ProcessService#cancelTask(Object, String, String)} for workflow-tasks.
  * <p>
- * Why this one parameter is what makes a task asynchronous, and why a contradiction with the model
- * is reported while the application boots, is decision 7 in the repository's DECISIONS.md.
+ * Decision 7 in the repository's DECISIONS.md says why this one parameter makes a task
+ * asynchronous. It also says why a contradiction with the model is reported while the application
+ * starts.
  */
 @Retention(RUNTIME)
 @Target(ElementType.PARAMETER)

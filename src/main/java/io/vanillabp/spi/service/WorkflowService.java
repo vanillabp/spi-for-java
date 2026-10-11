@@ -9,10 +9,10 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.Target;
 
 /**
- * Used to wire workflow-services to the processes they are responsible for.
+ * Connects a workflow service to the processes it is responsible for.
  * <p>
- * Where the state of a workflow lives, and why that is the aggregate rather than a process
- * variable, is decision 1 in the repository's DECISIONS.md.
+ * Decision 1 in the repository's DECISIONS.md says where the state of a workflow lives. It also
+ * says why that is the aggregate and not a process variable.
  */
 @Retention(RUNTIME)
 @Target(TYPE)
@@ -22,35 +22,35 @@ public @interface WorkflowService {
 
   /**
    * The class of the workflow aggregate this service works on. It decides which persistence
-   * VanillaBP loads and saves the aggregate with, and it is the type the methods of this class
-   * take as their aggregate parameter.
+   * VanillaBP uses to load and save the aggregate. It is also the type of the aggregate parameter
+   * of the methods of this class.
    *
    * @return The workflow-aggregate associated with the annotated service
    */
   Class<?> workflowAggregateClass();
 
   /**
-   * The process this service is wired to, and the only one a workflow is started under. Its
-   * {@link BpmnProcess#version()} is the fallback for every method of this class which names no
-   * version of its own.
+   * The process this service is connected to. It is the only one a workflow is started under.
+   * Its {@link BpmnProcess#version()} is the fallback for every method of this class which names
+   * no version of its own.
    *
-   * @return The process definition id as defined in the BPMN for which the
-   *         annotated service is responsible for. Defaults to the simple name of
-   *         the annotated class. This id is used to start new workflows and
-   *         correlate messages not related to a dedicated workflow.
+   * @return The process definition id as defined in the BPMN, which the annotated
+   *         service is responsible for. Defaults to the simple name of the
+   *         annotated class. This id is used to start new workflows and to
+   *         correlate messages which belong to no particular workflow.
    */
   BpmnProcess bpmnProcess() default @BpmnProcess(bpmnProcessId = BpmnProcess.USE_CLASS_NAME);
 
   /**
-   * Any further BPMN processes the annotated service is responsible for. A process called by
-   * a call activity of the primary one is the common case, and a process which was RENAMED is
-   * the second.
+   * Any further BPMN processes the annotated service is responsible for. The common case is a
+   * process called by a call activity of the primary one. The second case is a process which
+   * was RENAMED.
    * <p>
-   * Renaming a BPMN process is the one refactoring which reaches into the BPMS: the old id
-   * stays there with every version ever deployed under it and with the workflows still
-   * running on them, while the software brings only the new name. Naming the old id here,
-   * with the {@link BpmnProcess#version()} of the versions the BPMS still holds under it,
-   * keeps those workflows served by the methods of this class:
+   * Renaming a BPMN process is the one refactoring which reaches into the BPMS. The old id stays
+   * there, with every version ever deployed under it and with the workflows still running on
+   * them. But the software only brings the new name. Name the old id here, with the
+   * {@link BpmnProcess#version()} of the versions the BPMS still holds under it. Then the methods
+   * of this class keep serving those workflows:
    *
    * <pre>
    * &#64;WorkflowService(
@@ -59,10 +59,10 @@ public @interface WorkflowService {
    *         secondaryBpmnProcesses = &#64;BpmnProcess(bpmnProcessId = "order_approval", version = "1-3"))
    * </pre>
    *
-   * Each entry is a declaration of its own and carries its own version range. Mind what that
-   * means for a rename: a BPMS counts the versions of each process id separately, so version 2
-   * of the old id and version 2 of the new one are different models, and a range naming numbers
-   * belongs to the declaration it stands on rather than to the class.
+   * Each entry is a declaration of its own and has its own version range. Keep in mind what
+   * this means for a rename. A BPMS counts the versions of each process id separately. So
+   * version 2 of the old id and version 2 of the new one are different models. A range of
+   * numbers belongs to the declaration it is written on, not to the class.
    * <p>
    * A workflow is STARTED under {@link #bpmnProcess()} only. A secondary process serves what is
    * already running, and the workflows of the old id end under it.

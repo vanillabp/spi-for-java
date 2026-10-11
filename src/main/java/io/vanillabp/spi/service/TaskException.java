@@ -1,11 +1,11 @@
 package io.vanillabp.spi.service;
 
 /**
- * Used to indicate errors which have to be processed by the BPMN.
+ * Reports a business error which the BPMN model handles, for example with an error boundary event.
  * <p>
- * Why this is a business outcome with the aggregate committed, and not a failure, is decision 4 in
- * the repository's DECISIONS.md. That decision is also why a workflow service must not carry a
- * transaction of its own.
+ * Decision 4 in the repository's DECISIONS.md says why this is a business outcome and not a
+ * failure, and why the aggregate is committed. The same decision is the reason why a workflow
+ * service must not have a transaction of its own.
  */
 public class TaskException extends RuntimeException {
 
@@ -17,7 +17,7 @@ public class TaskException extends RuntimeException {
   /** What an error boundary event is matched by. */
   private final String errorCode;
 
-  /* avoid the expensive and useless stack trace for api exceptions */
+  /* an API exception needs no stack trace, and building one is expensive */
   @Override
   public synchronized Throwable fillInStackTrace() {
 
@@ -26,8 +26,8 @@ public class TaskException extends RuntimeException {
   }
 
   /**
-   * Reports the outcome under one name, which is then both the code routing the workflow and the
-   * message the BPMS shows.
+   * Reports the outcome under one name. That name is both the code which routes the workflow and
+   * the message the BPMS shows.
    *
    * @param errorCode The code of the BPMN error the model is to catch
    */
@@ -41,9 +41,9 @@ public class TaskException extends RuntimeException {
   }
 
   /**
-   * Reports the outcome where the model tells a readable name and a code apart. Only the code
-   * routes the workflow; the name reaches the BPMS as the message of the error, which is what
-   * somebody looking into the engine gets to read.
+   * Reports the outcome with a readable name and a separate code. Only the code routes the
+   * workflow. The name reaches the BPMS as the message of the error, which is what somebody who
+   * looks into the engine gets to read.
    *
    * @param errorName What the BPMS shows as the message of the error
    * @param errorCode The code of the BPMN error the model is to catch
@@ -62,7 +62,7 @@ public class TaskException extends RuntimeException {
   }
 
   /**
-   * The readable half of the outcome.
+   * The readable part of the outcome.
    *
    * @return The name given to the constructor, or the code where only one value was given
    */
@@ -73,8 +73,8 @@ public class TaskException extends RuntimeException {
   }
 
   /**
-   * The half which routes the workflow: the BPMS matches it against the error code of the
-   * boundary events around the task.
+   * The part which routes the workflow. The BPMS compares it with the error codes of the boundary
+   * events around the task.
    *
    * @return The code of the BPMN error the model is to catch
    */
