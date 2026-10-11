@@ -3,9 +3,9 @@ package io.vanillabp.spi.service;
 /**
  * Reports a business error which the BPMN model handles, for example with an error boundary event.
  * <p>
- * Decision 4 in the repository's DECISIONS.md says why this is a business outcome and not a
- * failure, and why the aggregate is committed. The same decision is the reason why a workflow
- * service must not have a transaction of its own.
+ * See decision 4 in the repository's DECISIONS.md. It says why this is a business outcome and
+ * not a failure, and why the aggregate is committed. The same decision is the reason why a
+ * workflow service must not have a transaction of its own.
  */
 public class TaskException extends RuntimeException {
 

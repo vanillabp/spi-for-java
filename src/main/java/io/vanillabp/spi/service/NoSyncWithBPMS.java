@@ -32,8 +32,8 @@ import java.lang.annotation.Target;
  * configuration allows the full sync
  * (<code>vanillabp.workflow-modules.&lt;module&gt;.workflows.&lt;process&gt;.allow-full-sync-with-bpms</code>).
  * <p>
- * Decision 3 in the repository's DECISIONS.md says why you declare what a BPMS gets to see,
- * instead of VanillaBP working it out.
+ * See decision 3 in the repository's DECISIONS.md. It says why you declare what a BPMS gets to
+ * see, instead of VanillaBP working it out.
  *
  * @see SyncWithBPMS
  */

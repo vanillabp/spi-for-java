@@ -11,8 +11,8 @@ import java.lang.annotation.Target;
 /**
  * Connects a workflow service to the processes it is responsible for.
  * <p>
- * Decision 1 in the repository's DECISIONS.md says where the state of a workflow lives. It also
- * says why that is the aggregate and not a process variable.
+ * See decision 1 in the repository's DECISIONS.md. It says where the state of a workflow lives,
+ * and why that is the aggregate and not a process variable.
  */
 @Retention(RUNTIME)
 @Target(TYPE)

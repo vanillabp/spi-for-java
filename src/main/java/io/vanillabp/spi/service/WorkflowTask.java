@@ -18,9 +18,9 @@ import java.lang.annotation.Target;
  * public void doSomeWorkload(final MyWorkflowAggregate aggregate) throws {@link TaskException} {
  * </pre>
  * <p>
- * Decision 8 in the repository's DECISIONS.md says what the version range names. It says why a
- * delivery without a reported version is served only by a method without a range. And it says
- * how a method which names no range takes the range of its {@link BpmnProcess}.
+ * See decision 8 in the repository's DECISIONS.md. It says what the version range names. It
+ * says why a delivery without a reported version is served only by a method without a range.
+ * And it says how a method which names no range takes the range of its {@link BpmnProcess}.
  */
 @Retention(RUNTIME)
 @Target(METHOD)

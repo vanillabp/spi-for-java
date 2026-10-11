@@ -18,7 +18,7 @@ import java.lang.annotation.Target;
  * Camunda 7 keeps it as the business key. Camunda 8 and the Process-Engine-API keep it as
  * a process variable named after the id attribute of the aggregate. So the aggregate this
  * method returns has to carry its id, unless the persistence layer assigns one on save.
- * Decision 9 in the repository's DECISIONS.md says why the application names the workflow.
+ * See decision 9 in the repository's DECISIONS.md for why the application names the workflow.
  *
  * <pre>
  * &#64;WorkflowStartedByBpms
@@ -43,9 +43,9 @@ import java.lang.annotation.Target;
  * event subprocess does not reach it either, because it fires inside a workflow which is
  * already running.
  * <p>
- * Decision 8 in the repository's DECISIONS.md says what the version range names. It says why a
- * delivery without a reported version is served only by a method without a range. And it says
- * how a method which names no range takes the range of its {@link BpmnProcess}.
+ * See decision 8 in the repository's DECISIONS.md. It says what the version range names. It
+ * says why a delivery without a reported version is served only by a method without a range.
+ * And it says how a method which names no range takes the range of its {@link BpmnProcess}.
  */
 @Retention(RUNTIME)
 @Target(METHOD)

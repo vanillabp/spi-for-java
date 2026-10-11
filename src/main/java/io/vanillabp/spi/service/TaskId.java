@@ -30,9 +30,9 @@ import io.vanillabp.spi.process.ProcessService;
  * or {@link ProcessService#completeTask(Object, String)} or
  * {@link ProcessService#cancelTask(Object, String, String)} for workflow-tasks.
  * <p>
- * Decision 7 in the repository's DECISIONS.md says why this one parameter makes a task
- * asynchronous. It also says why a contradiction with the model is reported while the application
- * starts.
+ * See decision 7 in the repository's DECISIONS.md. It says why this one parameter makes a task
+ * asynchronous. It also says why a contradiction with the model is reported while the
+ * application starts.
  */
 @Retention(RUNTIME)
 @Target(ElementType.PARAMETER)
