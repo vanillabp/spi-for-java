@@ -40,6 +40,9 @@ stop. Ask the maintainer before you write the change. If the answer is yes, the 
 the log. The old entry STAYS. It is marked as superseded and names the entry which replaced it. The
 new decision takes the next free number. Numbers are never reused and never renumbered, because a
 citation in an older release still points at them. Never edit an entry until its old text is gone.
+This rule had one exception, once, before the 2.0 release: on 2026-10-12 entry 3 was rewritten in
+place, so that its note became part of its text. From 2.0 on, the rule holds again without
+exception.
 
 Adding an entry follows the same rule. A decision gets a number when several places rely on it, and
 copying the explanation to each of them would go stale over time. Anything smaller is a comment
