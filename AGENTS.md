@@ -58,9 +58,9 @@ stays a technical term, but say what it means the first time it turns up, and wr
 abbreviation out once. If a sentence trips you up when you read it aloud, rewrite it.
 
 This holds for every English text here: the README files, `DECISIONS.md`, this file, the
-Javadoc and comments which explain something, and the texts of commits and pull requests. It
-holds for the [wiki](https://github.com/vanillabp/spi-for-java/wiki) as well, because the
-wiki clone has no `AGENTS.md` of its own.
+Javadoc and comments which explain something, in the main code and in the tests, and the texts
+of commits and pull requests. It holds for the [wiki](https://github.com/vanillabp/spi-for-java/wiki)
+as well, because the wiki clone has no `AGENTS.md` of its own.
 
 Nothing a program reads is renamed for the sake of language. Class and method names,
 configuration keys, artifact coordinates and the headlines of decision log entries stay as

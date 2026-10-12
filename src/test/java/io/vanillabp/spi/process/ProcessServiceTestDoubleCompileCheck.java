@@ -1,12 +1,11 @@
 package io.vanillabp.spi.process;
 
 /**
- * Compile-time guard: a hand-written test double of {@link ProcessService}
- * implementing only the pre-1.1.0 surface plus {@link ProcessService#getWorkflowModuleId()}
- * must keep compiling. Query methods added later (viewer/history API,
- * {@code startWorkflowByMessage}) are {@code default} methods on purpose — adding
- * new abstract methods to {@link ProcessService} breaks user test code and fails
- * this class's compilation.
+ * Holds that a test double of {@link ProcessService} written by hand still compiles. The double
+ * implements only the methods of the API before 1.1.0, plus
+ * {@link ProcessService#getWorkflowModuleId()}. Every method added later, like the queries for
+ * history and viewers or {@code startWorkflowByMessage}, is a {@code default} method on purpose.
+ * A new abstract method would break the test code of our users, and this class stops compiling.
  */
 class ProcessServiceTestDoubleCompileCheck implements ProcessService<Object> {
 
