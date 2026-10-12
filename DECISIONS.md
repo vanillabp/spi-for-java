@@ -43,6 +43,10 @@ See [Natural ids](./README.md#natural-ids).
 work on the class, on an attribute or on a nested type, and the more specific one wins. The default
 is the adapter's, which is why an aggregate without any annotation behaves the way its BPMS needs.
 
+*Note 2026-10-12: the default is no longer left to the adapter. Every adapter shares everything,
+and an aggregate without any annotation is started only where the workflow allows it with
+`allow-full-sync-with-bpms` (see `SyncWithBPMS`).*
+
 Declaring it keeps a model portable. An engine which runs embedded could read the aggregate live.
 An application which relies on that works on that engine, and takes the wrong branch on every
 remote one, without anybody noticing. Declaring it also keeps the payload honest: a value which

@@ -6,6 +6,9 @@ import java.util.List;
 import io.vanillabp.spi.service.TaskId;
 
 /**
+ * What an application does with the workflows of one workflow aggregate class: start them,
+ * send them messages and signals, complete or cancel their tasks, and read what the BPMS
+ * knows about them.
  * <p>
  * Two promises of this interface are written down in the decision log, because several places
  * rely on them. A workflow is addressed by the id attribute of its aggregate, not by a technical

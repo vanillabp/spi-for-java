@@ -76,8 +76,9 @@ public @interface WorkflowTask {
    * <p>
    * Several methods may serve one BPMN element if their versions do not overlap.
    * Overlapping ranges are reported when the application starts.
-   * A BPMS which does not report the version of a process serves every method
-   * regardless of this attribute. A range which names a version tag needs a BPMS
+   * A delivery whose version the BPMS does not report is served only by a method
+   * without a range. Such a method names no version, and the {@link BpmnProcess} it
+   * was declared with names none either. A range which names a version tag needs a BPMS
    * which can be asked about its tags. Camunda 8 needs its query API for that.
    * <p>
    * Naming no version does not simply mean &quot;every version&quot;. The method then

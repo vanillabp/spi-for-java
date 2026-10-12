@@ -408,7 +408,7 @@ public class LoanApproval {
 
 A getter is worth it: the model asks a question (`ratedAcceptable`) instead of comparing numbers itself. The data behind the answer can still change. So `ratingBand` can become an enum or three columns later, and neither the BPMN nor a running workflow notices.
 
-*Hint:* Each [BPMS-specific adapter](#available-adapters) implements this *magic* to redirect attribute references in BPMN expressions to the proper getter of your workflow-aggregate. Which values reach the BPMS at all is the subject of [What the BPMS gets to see](#what-the-bpms-gets-to-see).
+*Hint:* There is no magic behind this. Each [BPMS-specific adapter](#available-adapters) writes the values of your workflow-aggregate, getters included, as process variables whenever it talks to the BPMS for the workflow. The BPMS evaluates the expression against those variables. Which values reach the BPMS at all is the subject of [What the BPMS gets to see](#what-the-bpms-gets-to-see).
 
 ## Advanced topics
 
@@ -503,7 +503,7 @@ Use the `ProcessService` to correlate the message:
 VanillaBP finds the workflow by the id of the aggregate, so no correlation key is modelled and none is passed. If no configured BPMS knows the workflow, a `WorkflowNotFoundException` says so. The message is not lost silently (`TaskOperationsDispatchTest#unknownWorkflowRaisesGuidingException` of the platform integration, on both platforms).
 
 *Hint:* To start a new workflow by a message start event, use `startWorkflowByMessage` instead.
-In this case the aggregate must not be persisted before the call.
+It saves the aggregate in the transaction of the caller, like `startWorkflow`. So the aggregate may be new or saved already.
 
 If several receive tasks "wait" for the same message, pass a correlation-id as the third parameter of `correlateMessage`.
 
@@ -1162,7 +1162,7 @@ what addresses it, what the BPMS gets to see, and what an exception thrown by a 
 
 Issues and pull requests are welcome. [`CONTRIBUTING.md`](./CONTRIBUTING.md) says how this
 repository is built and what is asked before a change is written. A change here reaches every
-application and all four BPMS adapters at once. So by default a change only adds, and removes
+application and every BPMS adapter at once. So by default a change only adds, and removes
 nothing.
 
 ## Noteworthy & Contributors
