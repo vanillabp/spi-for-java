@@ -16,8 +16,8 @@ import java.lang.annotation.Target;
  * &#64;WorkflowTask(taskDefinition = "myFormKey")
  * public void setStatus(
  *         final MyWorkflowAggregate aggregate,
- *         &#64;TaskEvent("ALL") {@link Event} event,
- *         &#64;UserTaskId String id) throws {@link TaskException} {
+ *         &#64;TaskEvent(Event.ALL) {@link Event} event,
+ *         &#64;TaskId String id) throws {@link TaskException} {
  * </pre>
  */
 @Retention(RUNTIME)
