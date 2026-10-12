@@ -40,12 +40,10 @@ See [Natural ids](./README.md#natural-ids).
 ### 3. What the BPMS gets to see is declared, not guessed
 
 `@SyncWithBPMS` and `@NoSyncWithBPMS` say which values of an aggregate travel to the BPMS. They
-work on the class, on an attribute or on a nested type, and the more specific one wins. The default
-is the adapter's, which is why an aggregate without any annotation behaves the way its BPMS needs.
-
-*Note 2026-10-12: the default is no longer left to the adapter. Every adapter shares everything,
-and an aggregate without any annotation is started only where the workflow allows it with
-`allow-full-sync-with-bpms` (see `SyncWithBPMS`).*
+work on the class, on an attribute or on a nested type, and the more specific one wins. Without any
+annotation, every adapter shares everything. So the default is the same on every BPMS and is not
+left to the adapter. An aggregate without any annotation is started only where the workflow allows
+it with `allow-full-sync-with-bpms` (see `SyncWithBPMS`).
 
 Declaring it keeps a model portable. An engine which runs embedded could read the aggregate live.
 An application which relies on that works on that engine, and takes the wrong branch on every
@@ -135,8 +133,8 @@ See [Versioning of BPMN business-processes](./README.md#versioning-of-bpmn-busin
 The id of a workflow is the id of its workflow aggregate. The application assigns it, in the
 `@WorkflowStartedByBpms` method, and nobody else does. The BPMS holds that id afterwards: Camunda
 7 as the business key, Camunda 8 and the Process-Engine-API as a process variable named after the
-id attribute of the aggregate. Decision 98 of `adapter-platform-integration` says what this means
-for the platform. This entry says what it changes in this API.
+id attribute of the aggregate. The platform integration writes down in its own decision log what
+this means for the platform. This entry says what it changes in this API.
 
 `BpmsStartTrigger` lost its time. The trigger used to carry the moment the start event fired. It
 existed for one reason: the core turned that moment into the id of the workflow aggregate. Now the
