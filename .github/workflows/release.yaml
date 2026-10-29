@@ -60,7 +60,7 @@ jobs:
           # for secrets use env variables (set in each step which needs it) to avoid leaking them in files
           server-username-env-var: MAVEN_USERNAME
           server-password-env-var: MAVEN_PASSWORD
-          gpg-passphrase: GPG_PASSPHRASE
+          gpg-passphrase-env-var: GPG_PASSPHRASE
           gpg-private-key: ${{ secrets.MAVEN_GPG_PRIVATE_KEY }}
 
       - name: Create release branch
