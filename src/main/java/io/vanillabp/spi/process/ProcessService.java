@@ -210,6 +210,9 @@ public interface ProcessService<A> {
    * @param taskId       The task-id reported previously
    * @return The persisted workflow-aggregate, attached where the persistence layer
    *         works that way (e.g. JPA)
+   * @throws WorkflowSuspendedException If the workflow of the task is suspended. Your
+   *         transaction rolls back, and the same call can be made again after the workflow
+   *         is resumed
    * @see TaskId
    */
   A completeUserTask(
@@ -225,6 +228,9 @@ public interface ProcessService<A> {
    *                      can catch it
    * @return The persisted workflow-aggregate, attached where the persistence layer
    *         works that way (e.g. JPA)
+   * @throws WorkflowSuspendedException If the workflow of the task is suspended. Your
+   *         transaction rolls back, and the same call can be made again after the workflow
+   *         is resumed
    * @see TaskId
    */
   A cancelUserTask(
@@ -239,6 +245,9 @@ public interface ProcessService<A> {
    * @param taskId            The task-id reported previously
    * @return The persisted workflow-aggregate, attached where the persistence layer
    *         works that way (e.g. JPA)
+   * @throws WorkflowSuspendedException If the workflow of the task is suspended. Your
+   *         transaction rolls back, and the same call can be made again after the workflow
+   *         is resumed
    * @see TaskId
    */
   A completeTask(
@@ -254,6 +263,9 @@ public interface ProcessService<A> {
    *                      can catch it
    * @return The persisted workflow-aggregate, attached where the persistence layer
    *         works that way (e.g. JPA)
+   * @throws WorkflowSuspendedException If the workflow of the task is suspended. Your
+   *         transaction rolls back, and the same call can be made again after the workflow
+   *         is resumed
    * @see TaskId
    */
   A cancelTask(

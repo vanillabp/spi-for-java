@@ -896,6 +896,8 @@ The two "cancel" methods do not throw the task away. They end it by raising the 
 
 VanillaBP finds the BPMS which holds the task by itself. It asks the configured adapters in their order of priority. If none of them knows the id, a `TaskNotFoundException` explains why: the id is wrong or outdated, the task was completed long ago, or the workflow was canceled. A task which is just completed already is not an error. VanillaBP logs it and does nothing, so an answer which arrives twice does no harm.
 
+A workflow can be suspended in its BPMS, for example by an operator. While it is suspended, the BPMS refuses every answer to its tasks. If VanillaBP learns this before your transaction commits, the call raises a `WorkflowSuspendedException`. Your transaction rolls back and the task stays open, so make the same call again after the workflow is resumed. If the workflow is suspended after your commit, you get no exception. VanillaBP keeps the answer and gives it to the BPMS once the workflow is resumed, however long that takes. A workflow started by a call activity is not suspended together with its caller, so its tasks can still be answered.
+
 In this example the task is completed with the task-id received before:
 
 ```java
@@ -931,7 +933,7 @@ A `ProcessService` knows which [workflow module](https://github.com/vanillabp/ad
 
 ### What the API throws
 
-The API throws three exceptions, all of them unchecked.
+The API throws four exceptions, all of them unchecked.
 
 * `WorkflowNotFoundException`, raised by `correlateMessage`, `aggregateChanged`,
   `getProcessDefinitions` and `getWorkflowHistory`: no configured BPMS knows a workflow for this
@@ -941,6 +943,10 @@ The API throws three exceptions, all of them unchecked.
   `cancelTask`: no configured BPMS knows the given task. The id is wrong or outdated, the task was
   removed without being completed, or the workflow was canceled. A task which is just completed
   already is not an error: VanillaBP logs a warning and does nothing.
+* `WorkflowSuspendedException`, raised by `completeUserTask`, `cancelUserTask`, `completeTask` and
+  `cancelTask`: the workflow of the task is suspended in its BPMS. Your transaction rolls back and the
+  task stays open. Make the same call again after the workflow is resumed. Not every BPMS can suspend
+  a workflow. Camunda 7 can, and so can Camunda 8 from release line 8.10 on.
 * `ProcessDefinitionNotFoundException`, raised by `getBpmnXml`: no configured BPMS can find this
   process definition id. The ids are opaque, and each adapter has its own namespace for them. So pass
   back what `getProcessDefinitions` reported, unchanged.
@@ -949,7 +955,7 @@ The API throws three exceptions, all of them unchecked.
 
 Each message names the adapters which were asked, in the order they were asked. So a failing call says which BPMS was involved, and you need no debugger to find out.
 
-The platform integration holds all three promises with tests: `TaskOperationsDispatchTest#unknownWorkflowRaisesGuidingException`, `#unknownTaskRaisesGuidingException` and `#unknownUserTaskRaisesGuidingException` for the first two, `ViewerApiTest#unknownProcessDefinitionRaisesGuidingError` and `#malformedProcessDefinitionIdRaisesGuidingError` for the third, and `TaskOperationsDispatchTest#completedTaskIsIdempotentNoOp` for the completed task, which logs a warning and does nothing instead of throwing.
+The platform integration holds the promises about the other three exceptions with tests: `TaskOperationsDispatchTest#unknownWorkflowRaisesGuidingException`, `#unknownTaskRaisesGuidingException` and `#unknownUserTaskRaisesGuidingException` for `WorkflowNotFoundException` and `TaskNotFoundException`, `ViewerApiTest#unknownProcessDefinitionRaisesGuidingError` and `#malformedProcessDefinitionIdRaisesGuidingError` for `ProcessDefinitionNotFoundException`, and `TaskOperationsDispatchTest#completedTaskIsIdempotentNoOp` for the completed task, which logs a warning and does nothing instead of throwing. Only a BPMS knows whether a workflow is suspended, so the adapters hold the promise about `WorkflowSuspendedException`: `Camunda8SuspendedWorkflowIT` of the Camunda 8 adapter and `Camunda7SuspendedWorkflowIT` of the Camunda 7 adapter.
 
 ## Viewing BPMN and execution history of workflows
 
