@@ -6,6 +6,10 @@ on:
       release_version:
         description: 'Version to release (e.g. 1.2.3)'
         required: true
+      train:
+        description: "Release train, e.g. 2.0. Empty: this release uploads to Maven Central itself. Set: the bundle is kept for release-train.yaml in maven-release-parent. Release the repositories of a train in the order of their dependencies: each release reads the bundles of the releases before it."
+        required: false
+        default: ""
 
 jobs:
   release:
@@ -85,14 +89,56 @@ jobs:
           # Always exit successfully
           exit 0
 
+      # A release train builds the bundle of each release and keeps it as an Actions artifact.
+      # release-train.yaml in maven-release-parent uploads the bundles of all repositories of
+      # a train as one deployment, because Sonatype allows only a few deployments a month.
+      # The bundles of the train which are already there go into the local Maven repository,
+      # so this build finds the versions which are not on Maven Central yet. See the README
+      # of maven-release-parent.
+      - name: Read the bundles of the release train
+        if: inputs.train != ''
+        env:
+          TRAIN: "${{ inputs.train }}"
+          LINE: "main"
+          # reads the Actions artifacts of the other repositories, which GITHUB_TOKEN cannot
+          GH_TOKEN: "${{ secrets.VANILLABP_USER_TOKEN }}"
+        run: |
+          # the shared part of a release train lives once, in maven-release-parent
+          curl -fsSL -o "$RUNNER_TEMP/release-train.sh" \
+            https://raw.githubusercontent.com/vanillabp/maven-release-parent/main/.github/scripts/release-train.sh
+          bash "$RUNNER_TEMP/release-train.sh" prepare "$TRAIN" "$LINE"
+
       - name: Build & deploy to Maven Central
         run: |
           mvn --batch-mode --update-snapshots -DskipTests -DskipITs -Dgpg.passphrase=$GPG_PASSPHRASE \
-          clean deploy -P release,central-portal
+          $TRAIN_ARGS clean deploy -P release,central-portal
         env:
+          # builds the bundle and does not upload it. '-DskipUpload' is for a POM which
+          # configures the plugin without the property of release-parent
+          TRAIN_ARGS: "${{ inputs.train != '' && '-Dcentral.skip.upload=true -DskipUpload=true' || '' }}"
           GPG_PASSPHRASE: ${{ secrets.MAVEN_GPG_PASSPHRASE }}
           MAVEN_USERNAME: ${{ secrets.MAVEN_CENTRAL_PORTAL_TOKEN_USER }}
           MAVEN_PASSWORD: ${{ secrets.MAVEN_CENTRAL_PORTAL_TOKEN_PW }}
+
+      - name: Pack the bundle for the release train
+        if: inputs.train != ''
+        env:
+          TRAIN: "${{ inputs.train }}"
+          LINE: "main"
+          VERSION: "${{ inputs.release_version }}"
+        run: bash "$RUNNER_TEMP/release-train.sh" pack "$TRAIN" "$LINE" "$VERSION"
+
+      - name: Keep the bundle for the release train
+        if: inputs.train != ''
+        uses: actions/upload-artifact@v7
+        with:
+          # one name per repository and line: a new build of the same line replaces the old
+          # one, and release-train.yaml takes the newest
+          name: "release-train-${{ inputs.train }}-${{ github.event.repository.name }}-main"
+          path: "${{ runner.temp }}/release-train/"
+          retention-days: 30
+          if-no-files-found: error
+          overwrite: true
 
       - name: Commit release version
         run: |
@@ -103,8 +149,19 @@ jobs:
 
       - name: Create Git tag
         run: |
-          git tag -a "${{ github.event.inputs.release_version }}" -m "Release ${{ github.event.inputs.release_version }}"
-          git push origin --tags
+          if [ -n "$TRAIN" ] && git rev-parse -q --verify "refs/tags/$VERSION" > /dev/null; then
+            # nothing of a train is on Maven Central before release-train.yaml uploads it, so
+            # a fix released under the same version may move the tag
+            echo "::warning::Tag $VERSION exists already. The release train '$TRAIN' moves it to this build."
+            git tag -f -a "$VERSION" -m "Release $VERSION"
+            git push --force origin "refs/tags/$VERSION"
+          else
+            git tag -a "${{ github.event.inputs.release_version }}" -m "Release ${{ github.event.inputs.release_version }}"
+            git push origin --tags
+          fi
+        env:
+          TRAIN: "${{ inputs.train }}"
+          VERSION: "${{ github.event.inputs.release_version }}"
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v3
@@ -134,13 +191,28 @@ jobs:
         run: |  
           git add -A
           git commit -m "Set next version ${{ env.NEXT_SNAPSHOT }}"
-          git push origin HEAD:release/${{ github.event.inputs.release_version }}
+          if [ -n "$TRAIN" ] && git ls-remote --exit-code --heads origin "release/$VERSION" > /dev/null; then
+            echo "::warning::Branch release/$VERSION exists already. The release train '$TRAIN' replaces it with this build."
+            git push --force origin "HEAD:release/$VERSION"
+          else
+            git push origin HEAD:release/${{ github.event.inputs.release_version }}
+          fi
+        env:
+          TRAIN: "${{ inputs.train }}"
+          VERSION: "${{ github.event.inputs.release_version }}"
 
       - name: Create PR to merge release branch into main
         run: |
           gh auth login --with-token <<< "${{ secrets.GITHUB_TOKEN }}"
+          if [ -n "$TRAIN" ] && [ -n "$(gh pr list --head "release/$VERSION" --state open --json number --jq '.[].number')" ]; then
+            echo "::warning::The pull request of release/$VERSION is open already. The release train '$TRAIN' reuses it."
+            exit 0
+          fi
           gh pr create \
             --title "Merge release/${{ github.event.inputs.release_version }} into main" \
             --body "Automated PR to merge release branch." \
             --base main \
             --head release/${{ github.event.inputs.release_version }}
+        env:
+          TRAIN: "${{ inputs.train }}"
+          VERSION: "${{ github.event.inputs.release_version }}"
