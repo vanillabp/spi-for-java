@@ -21,7 +21,7 @@ package io.vanillabp.spi.process;
  * matter of one workflow: a workflow started by a call activity is not suspended together with the
  * workflow which called it, so its tasks can still be answered. The wiki of each adapter says what
  * its BPMS does. Why this is a type of its own is written down in
- * {@code DECISIONS.pending/2070.md}.
+ * decision 10 in the repository's DECISIONS.md.
  */
 public class WorkflowSuspendedException extends RuntimeException {
 
