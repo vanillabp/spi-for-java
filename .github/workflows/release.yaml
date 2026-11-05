@@ -11,6 +11,11 @@ on:
         required: false
         default: ""
 
+env:
+  # release-versions.sh of maven-release-parent at a fixed commit, so a later change of the
+  # script cannot break the release of an older branch. A new version of the script comes
+  # with a pull request which moves this commit.
+  RELEASE_VERSIONS_SH: "https://raw.githubusercontent.com/vanillabp/maven-release-parent/a0a3e691fc99cc80e7a6b87a35b7f7b94a9f6b47/.github/scripts/release-versions.sh"
 jobs:
   release:
     runs-on: ubuntu-latest
@@ -76,19 +81,15 @@ jobs:
           mvn --batch-mode --update-snapshots versions:set -DnewVersion=${{ github.event.inputs.release_version }}
           find . -name pom.xml.versionsBackup -delete
 
-      - name: Check for SNAPSHOT dependencies
+      # A version on Maven Central never changes. Below that line nobody can use this version
+      # yet, so the steps at the end may move its tag and reuse its branch and pull request
+      # when a release of the same version runs again.
+      - name: Refuse a version which Maven Central has already
+        env:
+          VERSION: "${{ inputs.release_version }}"
         run: |
-          SNAPSHOT_POMS=$(grep -R "<.*>.*SNAPSHOT<\/.*>" . --include=pom.xml || true)
-          
-          if [ -n "$SNAPSHOT_POMS" ] || [ -n "$SNAPSHOT_PKGS" ]; then
-            echo "::warning::Found SNAPSHOT dependencies in the project:"
-            [ -n "$SNAPSHOT_POMS" ] && echo "$SNAPSHOT_POMS"
-          else
-            echo "✅ No SNAPSHOT dependencies found."
-          fi
-          # Always exit successfully
-          exit 0
-
+          curl -fsSL -o "$RUNNER_TEMP/release-versions.sh" "$RELEASE_VERSIONS_SH"
+          bash "$RUNNER_TEMP/release-versions.sh" unpublished "$VERSION"
       # A release train builds the bundle of each release and keeps it as an Actions artifact.
       # release-train.yaml in maven-release-parent uploads the bundles of all repositories of
       # a train as one deployment, because Sonatype allows only a few deployments a month.
@@ -107,6 +108,25 @@ jobs:
           curl -fsSL -o "$RUNNER_TEMP/release-train.sh" \
             https://raw.githubusercontent.com/vanillabp/maven-release-parent/main/.github/scripts/release-train.sh
           bash "$RUNNER_TEMP/release-train.sh" prepare "$TRAIN" "$LINE"
+      # spi-for-java depends on no other VanillaBP repository today. The step is here so that
+      # a dependency added later gets its released version the way it does in every other
+      # repository, from the bundles of the train or from Maven Central.
+      - name: Use the released versions of VanillaBP
+        env:
+          TRAIN: "${{ inputs.train }}"
+        run: bash "$RUNNER_TEMP/release-versions.sh" raise "$TRAIN"
+      - name: Check for SNAPSHOT dependencies
+        run: |
+          SNAPSHOT_POMS=$(grep -R "<.*>.*SNAPSHOT<\/.*>" . --include=pom.xml || true)
+          
+          if [ -n "$SNAPSHOT_POMS" ] || [ -n "$SNAPSHOT_PKGS" ]; then
+            echo "::warning::Found SNAPSHOT dependencies in the project:"
+            [ -n "$SNAPSHOT_POMS" ] && echo "$SNAPSHOT_POMS"
+          else
+            echo "✅ No SNAPSHOT dependencies found."
+          fi
+          # Always exit successfully
+          exit 0
 
       - name: Build & deploy to Maven Central
         run: |
@@ -147,14 +167,15 @@ jobs:
           git config user.name "github-actions"
           git config user.email "github-actions@github.com"
           git add -A
-          git commit -m "Prepare release v${{ github.event.inputs.release_version }}"
+          { echo "Prepare release v${{ inputs.release_version }}"; if [ -s "$RUNNER_TEMP/raised-versions.txt" ]; then echo; cat "$RUNNER_TEMP/raised-versions.txt"; fi; } \
+            | git commit -F -
 
       - name: Create Git tag
         run: |
-          if [ -n "$TRAIN" ] && git rev-parse -q --verify "refs/tags/$VERSION" > /dev/null; then
-            # nothing of a train is on Maven Central before release-train.yaml uploads it, so
-            # a fix released under the same version may move the tag
-            echo "::warning::Tag $VERSION exists already. The release train '$TRAIN' moves it to this build."
+          if git rev-parse -q --verify "refs/tags/$VERSION" > /dev/null; then
+            # Maven Central has no artifact of this version, checked before the build, so a
+            # release of the same version which runs again may move the tag
+            echo "::warning::Tag $VERSION exists already. This release moves it to this build."
             git tag -f -a "$VERSION" -m "Release $VERSION"
             git push --force origin "refs/tags/$VERSION"
           else
@@ -193,8 +214,8 @@ jobs:
         run: |  
           git add -A
           git commit -m "Set next version ${{ env.NEXT_SNAPSHOT }}"
-          if [ -n "$TRAIN" ] && git ls-remote --exit-code --heads origin "release/$VERSION" > /dev/null; then
-            echo "::warning::Branch release/$VERSION exists already. The release train '$TRAIN' replaces it with this build."
+          if git ls-remote --exit-code --heads origin "release/$VERSION" > /dev/null; then
+            echo "::warning::Branch release/$VERSION exists already. This release replaces it with this build."
             git push --force origin "HEAD:release/$VERSION"
           else
             git push origin HEAD:release/${{ github.event.inputs.release_version }}
@@ -206,8 +227,8 @@ jobs:
       - name: Create PR to merge release branch into main
         run: |
           gh auth login --with-token <<< "${{ secrets.GITHUB_TOKEN }}"
-          if [ -n "$TRAIN" ] && [ -n "$(gh pr list --head "release/$VERSION" --state open --json number --jq '.[].number')" ]; then
-            echo "::warning::The pull request of release/$VERSION is open already. The release train '$TRAIN' reuses it."
+          if [ -n "$(gh pr list --head "release/$VERSION" --state open --json number --jq '.[].number')" ]; then
+            echo "::warning::The pull request of release/$VERSION is open already. This release reuses it."
             exit 0
           fi
           gh pr create \
