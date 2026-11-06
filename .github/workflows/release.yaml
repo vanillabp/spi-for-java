@@ -15,7 +15,7 @@ env:
   # release-versions.sh of maven-release-parent at a fixed commit, so a later change of the
   # script cannot break the release of an older branch. A new version of the script comes
   # with a pull request which moves this commit.
-  RELEASE_VERSIONS_SH: "https://raw.githubusercontent.com/vanillabp/maven-release-parent/a0a3e691fc99cc80e7a6b87a35b7f7b94a9f6b47/.github/scripts/release-versions.sh"
+  RELEASE_VERSIONS_SH: "https://raw.githubusercontent.com/vanillabp/maven-release-parent/e6c840c50e2ed95412710828df00fa194924edf6/.github/scripts/release-versions.sh"
 jobs:
   release:
     runs-on: ubuntu-latest
@@ -115,19 +115,11 @@ jobs:
         env:
           TRAIN: "${{ inputs.train }}"
         run: bash "$RUNNER_TEMP/release-versions.sh" raise "$TRAIN"
-      - name: Check for SNAPSHOT dependencies
-        run: |
-          SNAPSHOT_POMS=$(grep -R "<.*>.*SNAPSHOT<\/.*>" . --include=pom.xml || true)
-          
-          if [ -n "$SNAPSHOT_POMS" ] || [ -n "$SNAPSHOT_PKGS" ]; then
-            echo "::warning::Found SNAPSHOT dependencies in the project:"
-            [ -n "$SNAPSHOT_POMS" ] && echo "$SNAPSHOT_POMS"
-          else
-            echo "✅ No SNAPSHOT dependencies found."
-          fi
-          # Always exit successfully
-          exit 0
-
+      # 'raise' changes io.vanillabp* only. Any other SNAPSHOT stops the release here, also one
+      # of a library from outside VanillaBP. It has to be on Maven Central first, and main has
+      # to name its released version.
+      - name: No SNAPSHOT is left
+        run: bash "$RUNNER_TEMP/release-versions.sh" no-snapshots
       - name: Build & deploy to Maven Central
         run: |
           mvn --batch-mode --update-snapshots -DskipTests -DskipITs \
