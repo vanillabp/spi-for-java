@@ -39,7 +39,7 @@ jobs:
       # with. Remove this step once a plugin version stages a clean bundle under Maven 3.10.
       - name: Use Maven 3.9
         run: |
-          curl -fsSL https://archive.apache.org/dist/maven/maven-3/3.9.16/binaries/apache-maven-3.9.16-bin.tar.gz \
+          curl -fsSL --retry 5 --retry-all-errors --connect-timeout 20 https://repo.maven.apache.org/maven2/org/apache/maven/apache-maven/3.9.16/apache-maven-3.9.16-bin.tar.gz \
             | tar xz -C "$RUNNER_TEMP"
           echo "$RUNNER_TEMP/apache-maven-3.9.16/bin" >> "$GITHUB_PATH"
       - uses: actions/setup-java@v6
