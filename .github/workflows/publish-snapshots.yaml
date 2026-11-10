@@ -39,8 +39,13 @@ jobs:
       # with. Remove this step once a plugin version stages a clean bundle under Maven 3.10.
       - name: Use Maven 3.9
         run: |
-          curl -fsSL --retry 5 --retry-all-errors --connect-timeout 20 https://repo.maven.apache.org/maven2/org/apache/maven/apache-maven/3.9.16/apache-maven-3.9.16-bin.tar.gz \
-            | tar xz -C "$RUNNER_TEMP"
+          # Into a file and not through a pipe: a transfer which breaks halfway has already
+          # written to tar, so a repeat of curl could not mend it. Nine repeats wait about
+          # eight minutes, long enough for a 429 of Central to pass.
+          curl -fsSL --retry 9 --retry-all-errors --retry-max-time 600 --connect-timeout 20 --max-time 120 \
+            -o "$RUNNER_TEMP/apache-maven.tar.gz" \
+            https://repo.maven.apache.org/maven2/org/apache/maven/apache-maven/3.9.16/apache-maven-3.9.16-bin.tar.gz
+          tar xzf "$RUNNER_TEMP/apache-maven.tar.gz" -C "$RUNNER_TEMP"
           echo "$RUNNER_TEMP/apache-maven-3.9.16/bin" >> "$GITHUB_PATH"
       - uses: actions/setup-java@v6
         with:
