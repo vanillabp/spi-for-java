@@ -77,23 +77,10 @@
       </plugins>
     </pluginManagement>
     <plugins>
-      <!-- the sources jar every build attaches. The parent binds this plugin in its
-           'release' profile alone, and a snapshot is deployed without that profile, so
-           the snapshots of this repository carried no sources and an IDE showed
-           decompiled code to everyone developing against one. The version and the
-           configuration still come from the parent, only the binding is here. -->
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-source-plugin</artifactId>
-        <executions>
-          <execution>
-            <id>attach-sources</id>
-            <goals>
-              <goal>jar</goal>
-            </goals>
-          </execution>
-        </executions>
-      </plugin>
+      <!-- no maven-source-plugin here: a snapshot carries no sources jar. Every file a
+           snapshot uploads is one more request to Maven Central, and Central answers too many
+           of them with 429. A release still carries a sources jar, because the profile
+           'release' of release-parent binds the plugin -->
       <plugin>
         <groupId>com.diffplug.spotless</groupId>
         <artifactId>spotless-maven-plugin</artifactId>
@@ -195,6 +182,15 @@
                  them with 'mvn help:effective-pom' after the parent moves -->
             <configuration>
               <publishingServerId>vanillabp-central</publishingServerId>
+              <!-- where a snapshot goes. Without this URL the plugin takes the snapshot
+                   repository of the POM, and this profile sets that to GitHub Packages. So
+                   the snapshot went to GitHub Packages twice and never to Maven Central.
+                   The profile 'central-portal' needs no URL: there the POM names no
+                   snapshot repository, and the plugin falls back to this one -->
+              <centralSnapshotsUrl>https://central.sonatype.com/repository/maven-snapshots/</centralSnapshotsUrl>
+              <!-- leaves a module out of Maven Central. The upload of all other modules
+                   still runs at the end, also where the last module of the build is one
+                   which is left out -->
               <skipPublishing>${skip.central.release}</skipPublishing>
               <checksums>required</checksums>
               <skipUpload>${central.skip.upload}</skipUpload>
