@@ -44,13 +44,23 @@ platform integration, as
 [Where the promises on this page are held](./README.md#where-the-promises-on-this-page-are-held)
 says. So a change of behaviour is proven over there, in the same change.
 
-## Snapshots on Maven Central
+## Snapshots on Maven Central and on GitHub Packages
 
 This repository needs no snapshot. Its parent and all its dependencies are releases from Maven
-Central. Every push to `main` publishes a snapshot of this repository to the snapshot repository of
-Maven Central, `https://central.sonatype.com/repository/maven-snapshots/`. The platform and the
-adapters read it from there. The parent `io.vanillabp:release-parent` names that repository, and
-reading it needs no login and no token.
+Central. Every push to `main` publishes a snapshot of this repository to two places, with the
+profile `publish-snapshots` of the POM:
+
+- the snapshot repository of Maven Central,
+  `https://central.sonatype.com/repository/maven-snapshots/`. The parent
+  `io.vanillabp:release-parent` names that repository, and reading it needs no login and no token.
+  This is the place for you, on your machine and in your own builds.
+- GitHub Packages of this repository, `https://maven.pkg.github.com/vanillabp/spi-for-java`. The
+  workflows of the other VanillaBP repositories read the snapshot from there. So they do not ask
+  Maven Central for it, and its rate limit does not stop them. GitHub Packages needs a token even
+  for reading.
+
+The workflow publishes only where the Actions variable `VANILLABP_PUBLISH` is `true`. The vanillabp
+organization sets it. A fork does not have it, so a fork never publishes.
 
 ## A POM comment says what this POM does
 

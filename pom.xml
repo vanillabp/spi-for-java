@@ -150,4 +150,67 @@
       </plugin>
     </plugins>
   </build>
+  <profiles>
+    <!-- publishes a snapshot to two places in one build. GitHub Packages is what the builds of
+         the other VanillaBP repositories read. The snapshot repository of Maven Central is
+         what everybody else reads, because it needs no login. Only a push to main of the
+         repository in the vanillabp organization turns this profile on: the workflow asks
+         for an Actions variable which a fork does not have.
+
+         The profile 'central-portal' of the parent cannot do this. There the Central plugin
+         removes every execution of maven-deploy-plugin, so nothing could reach a second
+         repository. The plugin leaves maven-deploy-plugin alone as soon as the POM binds the
+         goal 'publish' itself, and that is why the execution below is spelled out. -->
+    <profile>
+      <id>publish-snapshots</id>
+      <distributionManagement>
+        <snapshotRepository>
+          <!-- the workflow gives this server the GITHUB_TOKEN of the run -->
+          <id>github-packages</id>
+          <name>GitHub Packages of spi-for-java</name>
+          <url>https://maven.pkg.github.com/vanillabp/spi-for-java</url>
+        </snapshotRepository>
+      </distributionManagement>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-deploy-plugin</artifactId>
+            <version>3.2.0</version>
+            <configuration>
+              <!-- release-parent 2.0.0 skips this plugin in 'central-portal' only. This
+                   line keeps it on, should a later parent skip it for every build -->
+              <skip>false</skip>
+              <!-- uploads after the last module was built, like the Central plugin does. So a
+                   build which fails halfway leaves both repositories as they were -->
+              <deployAtEnd>true</deployAtEnd>
+            </configuration>
+          </plugin>
+          <plugin>
+            <groupId>org.sonatype.central</groupId>
+            <artifactId>central-publishing-maven-plugin</artifactId>
+            <version>0.12.0</version>
+            <extensions>true</extensions>
+            <!-- copied from the profile 'central-portal' of release-parent 2.0.0. Compare
+                 them with 'mvn help:effective-pom' after the parent moves -->
+            <configuration>
+              <publishingServerId>vanillabp-central</publishingServerId>
+              <skipPublishing>${skip.central.release}</skipPublishing>
+              <checksums>required</checksums>
+              <skipUpload>${central.skip.upload}</skipUpload>
+            </configuration>
+            <executions>
+              <execution>
+                <id>publish-to-central</id>
+                <goals>
+                  <goal>publish</goal>
+                </goals>
+                <phase>deploy</phase>
+              </execution>
+            </executions>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+  </profiles>
 </project>
