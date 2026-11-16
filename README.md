@@ -92,22 +92,20 @@ The first thing `retrieveCreditRating` does is check whether there is a rating a
 
 ## Documentation
 
-<a name="usage"></a>The [wiki](https://github.com/vanillabp/spi-for-java/wiki/) has one page per topic:
+The [wiki](https://github.com/vanillabp/spi-for-java/wiki/) has one page per topic:
 
-1. <a name="natural-ids"></a>[The workflow aggregate](https://github.com/vanillabp/spi-for-java/wiki/The-workflow-aggregate): the entity which holds the data of a workflow, its natural id, what the BPMS gets to see, and how to tell the BPMS that it changed.
-2. <a name="start-a-workflow"></a><a name="workflows-nobody-started-through-vanillabp"></a>[Starting and ending workflows](https://github.com/vanillabp/spi-for-java/wiki/Starting-and-ending-workflows): `startWorkflow`, the start by message, the start nobody asked VanillaBP for, and `@WorkflowEnded`.
-3. <a name="wire-up-a-process"></a>[Wiring a process](https://github.com/vanillabp/spi-for-java/wiki/Wiring-a-process): `@WorkflowService`.
-4. <a name="wire-up-a-task"></a>[Wiring a task](https://github.com/vanillabp/spi-for-java/wiki/Wiring-a-task): `@WorkflowTask`, `@TaskParam`, the transaction, and `TaskException`.
-5. <a name="wire-up-an-expression"></a>[Wiring an expression](https://github.com/vanillabp/spi-for-java/wiki/Wiring-an-expression): how a condition or a timer reads the workflow aggregate.
-6. <a name="correlate-an-incoming-message"></a><a name="broadcast-a-signal"></a>[Messages and signals](https://github.com/vanillabp/spi-for-java/wiki/Messages-and-signals): `correlateMessage` and `sendSignal`.
-7. <a name="versioning-of-bpmn-business-processes"></a>[Versions of a process](https://github.com/vanillabp/spi-for-java/wiki/Versions-of-a-process): methods which serve only some versions of a process.
-8. <a name="call-activities"></a>[Call activities](https://github.com/vanillabp/spi-for-java/wiki/Call-activities): a process split into several BPMN models.
-9. <a name="multi-instance"></a>[Multi-instance](https://github.com/vanillabp/spi-for-java/wiki/Multi-instance): `@MultiInstanceElement`, `@MultiInstanceIndex`, `@MultiInstanceTotal` and the resolver.
-10. <a name="user-tasks-and-asynchronous-tasks"></a>[User tasks and asynchronous tasks](https://github.com/vanillabp/spi-for-java/wiki/User-tasks-and-asynchronous-tasks): `@TaskId`, `@TaskEvent`, and completing a task.
+1. [The workflow aggregate](https://github.com/vanillabp/spi-for-java/wiki/The-workflow-aggregate): the entity which holds the data of a workflow, its natural id, what the BPMS gets to see, and how to tell the BPMS that it changed.
+2. [Starting and ending workflows](https://github.com/vanillabp/spi-for-java/wiki/Starting-and-ending-workflows): `startWorkflow`, the start by message, the start nobody asked VanillaBP for, and `@WorkflowEnded`.
+3. [Wiring a process](https://github.com/vanillabp/spi-for-java/wiki/Wiring-a-process): `@WorkflowService`.
+4. [Wiring a task](https://github.com/vanillabp/spi-for-java/wiki/Wiring-a-task): `@WorkflowTask`, `@TaskParam`, the transaction, and `TaskException`.
+5. [Wiring an expression](https://github.com/vanillabp/spi-for-java/wiki/Wiring-an-expression): how a condition or a timer reads the workflow aggregate.
+6. [Messages and signals](https://github.com/vanillabp/spi-for-java/wiki/Messages-and-signals): `correlateMessage` and `sendSignal`.
+7. [Versions of a process](https://github.com/vanillabp/spi-for-java/wiki/Versions-of-a-process): methods which serve only some versions of a process.
+8. [Call activities](https://github.com/vanillabp/spi-for-java/wiki/Call-activities): a process split into several BPMN models.
+9. [Multi-instance](https://github.com/vanillabp/spi-for-java/wiki/Multi-instance): `@MultiInstanceElement`, `@MultiInstanceIndex`, `@MultiInstanceTotal` and the resolver.
+10. [User tasks and asynchronous tasks](https://github.com/vanillabp/spi-for-java/wiki/User-tasks-and-asynchronous-tasks): `@TaskId`, `@TaskEvent`, and completing a task.
 11. [The process service](https://github.com/vanillabp/spi-for-java/wiki/The-process-service): every operation of `ProcessService`, and the exceptions they throw.
-12. <a name="viewing-bpmn-and-execution-history-of-workflows"></a>[Showing BPMN and history](https://github.com/vanillabp/spi-for-java/wiki/Showing-BPMN-and-history): what a BPMN viewer needs.
-
-<!-- The named anchors above keep links to the sections which this page held before 2.0 working. They point to the wiki page which took over the section. -->
+12. [Showing BPMN and history](https://github.com/vanillabp/spi-for-java/wiki/Showing-BPMN-and-history): what a BPMN viewer needs.
 
 ## About the SPI
 
