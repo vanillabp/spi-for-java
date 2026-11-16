@@ -4,8 +4,16 @@ This is the API a business application writes against. Applications see every ch
 default a change only adds, and a removal needs a deprecation which names the release it goes out
 in.
 
-Read [`README.md`](./README.md) first. The blueprints and the wikis link to its anchors. So rename a
-heading only together with everything which points at it.
+Read [`README.md`](./README.md) first, and then the [wiki](https://github.com/vanillabp/spi-for-java/wiki).
+The README is the landing page: what the SPI is, why it exists, and which adapters implement it. The
+wiki documents the API, one page per topic. The blueprints and the other wikis link to the anchors
+of both. So rename a heading only together with everything which points at it. The README keeps a
+named anchor for each section it held before 2.0, in its list of wiki pages, because the blueprints
+still link to them.
+
+Every snippet in the wiki is code from a blueprint, and a link under the snippet names the file.
+When you change the wiki, take the snippet from the blueprint which compiles it. Where no blueprint
+shows a topic, the page writes the example itself and says so.
 
 ## What belongs in `UPGRADE.md`
 
@@ -15,8 +23,8 @@ something. Write it under the version line which brought the change. A change be
 snapshots gets no entry, however much work it was. The entry would ask the reader to follow how the
 release was built, instead of doing their own upgrade. And git holds that history anyway.
 
-What does not go there still has a place. The end state of a new part of the API belongs in
-[`README.md`](./README.md) and in the wiki, because that is where users read. Reasons which several
+What does not go there still has a place. The end state of a new part of the API belongs in the
+[wiki](https://github.com/vanillabp/spi-for-java/wiki), because that is where users read. Reasons which several
 places in this repository rely on belong in [`DECISIONS.md`](./DECISIONS.md). What is neither
 belongs nowhere. Say it in the commit message.
 

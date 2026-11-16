@@ -7,9 +7,10 @@ BPMS adapter, brings them to life. The
 [wiki](https://github.com/vanillabp/adapter-platform-integration/wiki) describes what an application
 does with them.
 
-Where the rules are: [`README.md`](./README.md) documents the API itself, and users read it. The
-blueprints and the wikis link to its headings, so rename a heading only together with everything
-which points at it. [`AGENTS.md`](./AGENTS.md) says how work is done here, in the form an agent
+Where the rules are: the [wiki](https://github.com/vanillabp/spi-for-java/wiki) documents the API
+itself, and users read it. [`README.md`](./README.md) is the landing page which leads there. The
+blueprints and the other wikis link to the headings of both, so rename a heading only together with
+everything which points at it. [`AGENTS.md`](./AGENTS.md) says how work is done here, in the form an agent
 reads. [`DECISIONS.md`](./DECISIONS.md) holds the decisions several places rely on, and it is the
 only thing the code may cite.
 
@@ -39,7 +40,7 @@ Run `install`, not `install verify`. `install` already runs every phase `verify`
 walks through two lifecycles and reports every compiler warning twice. Nothing here needs Docker.
 
 Annotations and interfaces have no behaviour of their own. So no test in this repository can fail
-when a sentence of the README stops being true. The tests which hold those promises live in the
+when a sentence of the README or of the wiki stops being true. The tests which hold those promises live in the
 platform integration, as
 [Where the promises on this page are held](./README.md#where-the-promises-on-this-page-are-held)
 says. So a change of behaviour is proven over there, in the same change.
