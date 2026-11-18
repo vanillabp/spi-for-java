@@ -59,7 +59,7 @@ jobs:
           echo "$RUNNER_TEMP/apache-maven-3.9.16/bin" >> "$GITHUB_PATH"
       - uses: actions/setup-java@v6
         with:
-          java-version: 25.0.5+8
+          java-version: 25.0.5+100000002
           distribution: temurin
           cache: maven
       # 'install' and not 'install verify': install already runs every phase verify
