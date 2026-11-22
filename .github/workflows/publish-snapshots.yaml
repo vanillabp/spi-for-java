@@ -54,20 +54,22 @@ jobs:
           java-version: 25.0.5+8
           distribution: temurin
           cache: maven
+      # the cache above can hold old snapshots of our own, so they go and Maven fetches the newest
+      - uses: ./.github/actions/forget-cached-snapshots
       # 'install' and not 'install verify': install already runs every phase verify
       # has, so naming both made Maven walk two lifecycles per module. The tests
       # skipped their second run, the compiler did not, and every javac warning was
       # reported twice - once per compilation.
       - name: Build and test
         if: "${{ github.event_name == 'pull_request' || vars.VANILLABP_PUBLISH != 'true' }}"
-        run: mvn --batch-mode --update-snapshots -s .github/maven/settings.xml install
+        run: mvn --batch-mode -s .github/maven/settings.xml install
         env:
           CI: false
       # the profile 'publish-snapshots' sends the snapshot to GitHub Packages of this
       # repository and to the snapshot repository of Maven Central
       - name: Publish snapshot
         if: "${{ github.event_name == 'push' && vars.VANILLABP_PUBLISH == 'true' }}"
-        run: mvn --batch-mode --update-snapshots -s .github/maven/settings.xml deploy -P publish-snapshots
+        run: mvn --batch-mode -s .github/maven/settings.xml deploy -P publish-snapshots
         env:
           MAVEN_USERNAME: "${{ secrets.MAVEN_CENTRAL_PORTAL_TOKEN_USER }}"
           MAVEN_PASSWORD: "${{ secrets.MAVEN_CENTRAL_PORTAL_TOKEN_PW }}"

@@ -68,6 +68,8 @@ jobs:
           server-password-env-var: MAVEN_PASSWORD
           gpg-passphrase-env-var: MAVEN_GPG_PASSPHRASE
           gpg-private-key: ${{ secrets.MAVEN_GPG_PRIVATE_KEY }}
+      # the cache above can hold old snapshots of our own, so they go and Maven fetches the newest
+      - uses: ./.github/actions/forget-cached-snapshots
 
       - name: Create release branch
         run: |
@@ -75,7 +77,7 @@ jobs:
 
       - name: Set Maven release version
         run: |
-          mvn --batch-mode --update-snapshots versions:set -DnewVersion=${{ github.event.inputs.release_version }}
+          mvn --batch-mode versions:set -DnewVersion=${{ github.event.inputs.release_version }}
           find . -name pom.xml.versionsBackup -delete
 
       # A version on Maven Central never changes. Below that line nobody can use this version
@@ -119,7 +121,7 @@ jobs:
         run: bash "$RUNNER_TEMP/release-versions.sh" no-snapshots
       - name: Build & deploy to Maven Central
         run: |
-          mvn --batch-mode --update-snapshots -DskipTests -DskipITs \
+          mvn --batch-mode -DskipTests -DskipITs \
           $TRAIN_ARGS clean deploy -P release,central-portal
         env:
           # builds the bundle and does not upload it. '-DskipUpload' is for a POM which
@@ -195,9 +197,9 @@ jobs:
 
       - name: Set next snapshot version
         run: |
-          mvn --batch-mode --update-snapshots versions:set -DnewVersion=${{ env.NEXT_SNAPSHOT }}
+          mvn --batch-mode versions:set -DnewVersion=${{ env.NEXT_SNAPSHOT }}
           find . -name pom.xml.versionsBackup -delete
-          mvn --batch-mode --update-snapshots -DskipTests -DskipITs package
+          mvn --batch-mode -DskipTests -DskipITs package
 
       - name: Commit next snapshot version
         run: |  

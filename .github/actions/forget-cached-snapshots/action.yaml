@@ -1,0 +1,32 @@
+name: Forget cached snapshots
+description: >-
+  Removes the VanillaBP and Phactum snapshots and the marks of failed downloads from the
+  local Maven repository which the cache restored, so the build fetches the newest
+  snapshots.
+runs:
+  using: composite
+  steps:
+    # A release never changes, so it may come from the cache. A snapshot does change: the
+    # cache can hold one which is days old, and Maven would build against it. Without the
+    # snapshots of io.vanillabp and com.phactum in the local repository, Maven has nothing
+    # old to fall back on and has to ask the snapshot repositories for the newest ones.
+    # That is why the builds do not need '--update-snapshots': it makes Maven check every
+    # snapshot and every failed download again, and so sends many more requests to Maven
+    # Central. Releases stay, like io.vanillabp:release-parent, and snapshots of other
+    # projects stay too.
+    # A '*.lastUpdated' file marks a download which failed in the run that wrote the cache.
+    # Maven does not try that download again before the update interval has passed and
+    # reports the artifact as missing, although the repository has it. So these files go
+    # as well. The files they mark were never downloaded, so nothing else is lost.
+    - name: Remove our snapshots and the marks of failed downloads
+      shell: bash
+      run: |
+        repository="${HOME}/.m2/repository"
+        for group in io/vanillabp com/phactum; do
+          if [ -d "${repository}/${group}" ]; then
+            find "${repository}/${group}" -type d -name '*-SNAPSHOT' -prune -exec rm -rf {} +
+          fi
+        done
+        if [ -d "${repository}" ]; then
+          find "${repository}" -type f -name '*.lastUpdated' -delete
+        fi
