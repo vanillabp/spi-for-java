@@ -1,0 +1,45 @@
+# Maven 3.10 is not used yet. The Central Portal rejects the bundles it builds
+# (mavenplugins/central-publishing-maven-plugin#78), and Quarkus' test bootstrap cannot read
+# the repository records it writes, so every Quarkus test downloads everything again. All
+# vanillabp repositories stay on 3.9 until both are solved.
+name: Use Maven 3.9
+description: Puts Maven 3.9 on the PATH, from the Actions cache or else from Maven Central.
+inputs:
+  version:
+    description: The Maven version to use.
+    default: 3.9.16
+runs:
+  using: composite
+  steps:
+    # Every job used to ask Maven Central for the same file in every run. Central sometimes
+    # answers that with 404 or 429, and one such job turned the whole run red. A version on
+    # Central never changes, so a job takes it from the cache.
+    #
+    # Every workflow here has one job which needs Maven (publish-snapshots.yaml and
+    # release.yaml). The first run without a cache fills it, and later runs take it from there.
+    # Runs on other branches also see the cache which a run on 'main' made.
+    #
+    # The key does not start with 'maven-'. Keys of a Maven repository cache start like that,
+    # and their restore keys must never pick up this cache.
+    - uses: actions/cache@v6
+      with:
+        path: ~/apache-maven-${{ inputs.version }}
+        key: apache-maven-${{ inputs.version }}
+    # Into a file and not through a pipe into tar: a transfer which breaks halfway has already
+    # written to the pipe, so the next attempt of curl would add to a damaged stream.
+    #
+    # curl doubles its pause from one second on, so nine repeats wait for about eight and a
+    # half minutes. A 429 of Central lasts longer than the 30 seconds which five repeats wait.
+    # Only the transfer is repeated, so this hides no defect of the build.
+    - name: Download Maven unless the cache brought it
+      shell: bash
+      env:
+        VERSION: ${{ inputs.version }}
+      run: |
+        if [ ! -x "$HOME/apache-maven-$VERSION/bin/mvn" ]; then
+          curl -fsSL --retry 9 --retry-all-errors --retry-max-time 600 --connect-timeout 20 --max-time 120 \
+            -o "$RUNNER_TEMP/apache-maven.tar.gz" \
+            "https://repo.maven.apache.org/maven2/org/apache/maven/apache-maven/$VERSION/apache-maven-$VERSION-bin.tar.gz"
+          tar xzf "$RUNNER_TEMP/apache-maven.tar.gz" -C "$HOME"
+        fi
+        echo "$HOME/apache-maven-$VERSION/bin" >> "$GITHUB_PATH"
